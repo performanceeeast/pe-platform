@@ -1,0 +1,19 @@
+/**
+ * PE brand CSS custom properties. Apps import this once at the root so
+ * non-Tailwind code (inline styles, shadcn overrides) can reference
+ * var(--pe-blue-500) directly.
+ */
+
+:root {
+  --pe-blue-50: #f0f5fb;
+  --pe-blue-100: #dce8f3;
+  --pe-blue-200: #b8d0e5;
+  --pe-blue-300: #8bb2d1;
+  --pe-blue-400: #5c8bb8;
+  --pe-blue-500: #1f4e78;
+  --pe-blue-600: #1a426a;
+  --pe-blue-700: #143759;
+  --pe-blue-800: #0f2b47;
+  --pe-blue-900: #0a2036;
+  --pe-blue-950: #051527;
+}

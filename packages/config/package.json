@@ -1,0 +1,27 @@
+{
+  "name": "@pe/config",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Shared tsconfig, eslint, tailwind presets for pe-platform",
+  "type": "module",
+  "exports": {
+    "./tsconfig/base.json": "./tsconfig/base.json",
+    "./tsconfig/next.json": "./tsconfig/next.json",
+    "./tsconfig/react-library.json": "./tsconfig/react-library.json",
+    "./tailwind": "./tailwind/index.ts",
+    "./eslint/next": "./eslint/next.js"
+  },
+  "files": [
+    "tsconfig",
+    "tailwind",
+    "eslint"
+  ],
+  "dependencies": {
+    "@pe/branding": "workspace:*"
+  },
+  "devDependencies": {
+    "tailwindcss": "3.4.13",
+    "tailwindcss-animate": "1.0.7",
+    "@types/node": "22.7.5"
+  }
+}

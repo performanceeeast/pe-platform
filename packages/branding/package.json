@@ -1,0 +1,22 @@
+{
+  "name": "@pe/branding",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Performance East brand tokens — colors, typography, assets",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./colors": "./src/colors.ts",
+    "./typography": "./src/typography.ts",
+    "./tokens.css": "./src/tokens.css"
+  },
+  "files": [
+    "src"
+  ],
+  "devDependencies": {
+    "@pe/config": "workspace:*",
+    "typescript": "5.6.2"
+  }
+}
