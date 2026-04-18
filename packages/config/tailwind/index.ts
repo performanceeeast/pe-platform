@@ -1,5 +1,5 @@
 import type { Config } from 'tailwindcss';
-import { peBlue, fontFamilies } from '@pe/branding';
+import { peRed, peNavy, fontFamilies } from '@pe/branding';
 import animate from 'tailwindcss-animate';
 
 /**
@@ -21,7 +21,8 @@ export const peTailwindPreset: Config = {
     },
     extend: {
       colors: {
-        'pe-blue': peBlue,
+        'pe-red': peRed,
+        'pe-navy': peNavy,
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',

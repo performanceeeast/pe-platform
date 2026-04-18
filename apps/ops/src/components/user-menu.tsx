@@ -29,7 +29,7 @@ export function UserMenu({ email, fullName, role }: UserMenuProps) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" aria-label="Open user menu">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-pe-blue-500 text-xs font-semibold text-white">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-pe-red-500 text-xs font-semibold text-white">
             {initials}
           </span>
         </Button>

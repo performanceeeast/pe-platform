@@ -20,7 +20,7 @@ export function BottomNav() {
                 href={item.href}
                 className={cn(
                   'flex min-h-[56px] flex-col items-center justify-center gap-0.5 text-[10px] font-medium',
-                  active ? 'text-pe-blue-500' : 'text-muted-foreground',
+                  active ? 'text-pe-red-500' : 'text-muted-foreground',
                 )}
               >
                 <Icon className="h-5 w-5" />

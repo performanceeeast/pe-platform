@@ -14,10 +14,13 @@ const PRIORITY_LABELS: Record<Priority, string> = {
   3: 'P3',
 };
 
+// Warm → cool as urgency drops. P0 uses the brand red (matches --primary
+// and the logo). P2 moves to slate so the badge palette stays
+// scannable — every open task would otherwise be red.
 const PRIORITY_CLASSES: Record<Priority, string> = {
-  0: 'bg-red-600 text-white',
+  0: 'bg-pe-red-600 text-white',
   1: 'bg-orange-500 text-white',
-  2: 'bg-pe-blue-500 text-white',
+  2: 'bg-slate-600 text-white',
   3: 'bg-muted text-muted-foreground',
 };
 

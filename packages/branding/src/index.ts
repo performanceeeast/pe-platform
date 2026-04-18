@@ -1,2 +1,2 @@
-export { peBlue, semantic, type PeBlueScale } from './colors';
+export { peRed, peNavy, semantic, type PeRedScale } from './colors';
 export { fontFamilies } from './typography';

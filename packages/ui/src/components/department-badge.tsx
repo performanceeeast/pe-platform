@@ -24,8 +24,11 @@ const DEPARTMENT_LABELS: Record<Department, string> = {
   other: 'Other',
 };
 
+// Sales uses the legacy PE Navy so the brand red stays reserved for
+// app-wide primary + P0 critical. Chrome + navy + red together echo the
+// logo itself.
 const DEPARTMENT_CLASSES: Record<Department, string> = {
-  sales: 'bg-pe-blue-500 text-white hover:bg-pe-blue-600',
+  sales: 'bg-pe-navy text-white hover:brightness-110',
   service: 'bg-amber-600 text-white hover:bg-amber-700',
   parts: 'bg-emerald-600 text-white hover:bg-emerald-700',
   fni: 'bg-violet-600 text-white hover:bg-violet-700',

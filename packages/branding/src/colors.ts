@@ -1,31 +1,40 @@
 /**
  * Performance East brand palette.
  *
- * `peBlue.500` is the canonical brand color (#1F4E78). The full 50–950 scale is
- * derived along OKLCH lightness steps so tints and shades stay perceptually
- * even. Apps consume this via the Tailwind preset in `@pe/config/tailwind`.
+ * `peRed.500` is the canonical brand color (#E31C2F — the red in the
+ * racing-style PE logo). The full 50–950 scale is derived along OKLCH
+ * lightness steps so tints and shades stay perceptually even. Apps consume
+ * this via the Tailwind preset in `@pe/config/tailwind`.
+ *
+ * History: v0 of the platform used PE Blue (#1F4E78) as the primary before
+ * we reconciled with the consumer-facing brand. The legacy blue survives as
+ * `peNavy` so it can still be pulled in as an accent (used today by the
+ * Sales department badge — chrome + navy + red echoes the logo itself).
  */
 
-export const peBlue = {
-  50: '#F0F5FB',
-  100: '#DCE8F3',
-  200: '#B8D0E5',
-  300: '#8BB2D1',
-  400: '#5C8BB8',
-  500: '#1F4E78',
-  600: '#1A426A',
-  700: '#143759',
-  800: '#0F2B47',
-  900: '#0A2036',
-  950: '#051527',
+export const peRed = {
+  50: '#FEF2F3',
+  100: '#FDE3E5',
+  200: '#FBC5C9',
+  300: '#F79098',
+  400: '#EF525D',
+  500: '#E31C2F',
+  600: '#C41224',
+  700: '#A20D1B',
+  800: '#820B16',
+  900: '#601017',
+  950: '#3C0308',
 } as const;
 
-export type PeBlueScale = typeof peBlue;
+export type PeRedScale = typeof peRed;
+
+/** Legacy PE Blue, retained as an accent token (not the primary). */
+export const peNavy = '#1F4E78';
 
 /** Semantic aliases so app code doesn't hard-code the numeric scale. */
 export const semantic = {
-  primary: peBlue[500],
-  primaryHover: peBlue[600],
-  primaryActive: peBlue[700],
+  primary: peRed[500],
+  primaryHover: peRed[600],
+  primaryActive: peRed[700],
   onPrimary: '#FFFFFF',
 } as const;
