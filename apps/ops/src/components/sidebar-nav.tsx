@@ -1,22 +1,27 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { ExternalLink } from 'lucide-react';
 import { cn } from '@pe/ui';
 import { PRIMARY_NAV } from '@/lib/nav-items';
+import logo from '../../public/brand/logo.png';
 
 export function SidebarNav() {
   const pathname = usePathname();
 
   return (
     <aside className="hidden shrink-0 border-r bg-muted/20 md:flex md:w-60 md:flex-col">
-      <div className="flex h-14 items-center border-b px-4">
-        <Link href="/today" className="flex items-center gap-2">
-          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-pe-blue-500 text-xs font-bold text-white">
-            PE
-          </span>
-          <span className="text-sm font-semibold">Ops</span>
+      <div className="flex h-16 items-center border-b px-4">
+        <Link href="/today" className="flex items-center gap-2" aria-label="Performance East ops home">
+          <Image
+            src={logo}
+            alt="Performance East"
+            sizes="180px"
+            className="h-auto w-[168px]"
+            priority
+          />
         </Link>
       </div>
 

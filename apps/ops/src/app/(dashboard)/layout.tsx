@@ -1,9 +1,12 @@
 import { redirect } from 'next/navigation';
+import Image from 'next/image';
+import Link from 'next/link';
 import { requireUser } from '@pe/auth';
 import { createClient } from '@pe/database/server';
 import { SidebarNav } from '@/components/sidebar-nav';
 import { BottomNav } from '@/components/bottom-nav';
 import { UserMenu } from '@/components/user-menu';
+import logo from '../../../public/brand/logo.png';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
@@ -22,7 +25,16 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <div className="flex min-h-screen bg-background">
       <SidebarNav />
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-end gap-4 border-b bg-background/95 px-4 backdrop-blur md:px-6">
+        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-background/95 px-4 backdrop-blur md:justify-end md:px-6">
+          <Link href="/today" className="md:hidden" aria-label="Performance East home">
+            <Image
+              src={logo}
+              alt="Performance East"
+              sizes="140px"
+              className="h-auto w-[140px]"
+              priority
+            />
+          </Link>
           <UserMenu
             email={profile.email ?? user.email ?? null}
             fullName={profile.full_name}
