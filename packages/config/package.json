@@ -9,13 +9,17 @@
     "./tsconfig/next.json": "./tsconfig/next.json",
     "./tsconfig/react-library.json": "./tsconfig/react-library.json",
     "./tailwind": "./tailwind/index.ts",
-    "./eslint/next": "./eslint/next.js"
+    "./eslint/next": "./eslint/next.cjs",
+    "./eslint/next.cjs": "./eslint/next.cjs"
   },
   "files": [
     "tsconfig",
     "tailwind",
     "eslint"
   ],
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
   "dependencies": {
     "@pe/branding": "workspace:*"
   },

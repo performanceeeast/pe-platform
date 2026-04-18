@@ -62,8 +62,8 @@ export const peTailwindPreset: Config = {
         sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        sans: fontFamilies.sans,
-        mono: fontFamilies.mono,
+        sans: [...fontFamilies.sans],
+        mono: [...fontFamilies.mono],
       },
       keyframes: {
         'accordion-down': {
