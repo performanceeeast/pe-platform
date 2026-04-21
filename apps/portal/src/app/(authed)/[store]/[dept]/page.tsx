@@ -3,11 +3,13 @@ import type { Metadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, PageHeader } from '@pe/ui';
 import { requireUserContext, getLandingPath } from '@pe/auth';
 
-const VALID_DEPARTMENTS = ['admin', 'sales', 'service', 'parts', 'fni'] as const;
+// Note: 'admin' has its own static route at /[store]/admin/*, which takes
+// precedence over this dynamic segment. Keep it out of the valid list so an
+// accidental /foo/admin that misses the static route still 404s.
+const VALID_DEPARTMENTS = ['sales', 'service', 'parts', 'fni'] as const;
 type DepartmentSlug = (typeof VALID_DEPARTMENTS)[number];
 
 const DEPARTMENT_LABELS: Record<DepartmentSlug, string> = {
-  admin: 'Administration',
   sales: 'Sales',
   service: 'Service',
   parts: 'Parts',
