@@ -7,6 +7,7 @@ import {
   Folder,
   FileText,
   Settings,
+  TrendingUp,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -37,6 +38,15 @@ export const ADMIN_STORE_NAV: Array<{ sub: string; label: string; icon: LucideIc
   { sub: '/projects', label: 'Projects', icon: Folder },
   { sub: '/notes', label: 'Notes', icon: FileText },
   { sub: '/settings', label: 'Settings', icon: Settings },
+];
+
+/**
+ * Department links resolved against the active store slug at render time.
+ * Shown to admins as a "Departments" section in the sidebar. Non-admins
+ * already have their own department via the Home link, so we don't repeat it.
+ */
+export const DEPT_STORE_NAV: Array<{ sub: string; label: string; icon: LucideIcon }> = [
+  { sub: '/sales', label: 'Sales', icon: TrendingUp },
 ];
 
 export const HOME_ICON: LucideIcon = Home;

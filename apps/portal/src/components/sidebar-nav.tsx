@@ -8,6 +8,7 @@ import {
   GLOBAL_NAV,
   ADMIN_NAV,
   ADMIN_STORE_NAV,
+  DEPT_STORE_NAV,
   HOME_ICON,
   type NavItem,
 } from '@/lib/nav-items';
@@ -61,6 +62,14 @@ export function SidebarNav({
   const adminSubItems: NavItem[] = isAdmin && activeStoreSlug
     ? ADMIN_STORE_NAV.map(({ sub, label, icon }) => ({
         href: `/${activeStoreSlug}/admin${sub}`,
+        label,
+        icon,
+      }))
+    : [];
+
+  const deptItems: NavItem[] = isAdmin && activeStoreSlug
+    ? DEPT_STORE_NAV.map(({ sub, label, icon }) => ({
+        href: `/${activeStoreSlug}${sub}`,
         label,
         icon,
       }))
@@ -131,6 +140,19 @@ export function SidebarNav({
             </li>
           </ul>
         )}
+
+        {deptItems.length > 0 ? (
+          <div>
+            <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Departments
+            </p>
+            <ul className="space-y-1">
+              {deptItems.map((item) => (
+                <NavLink key={item.href} item={item} pathname={pathname} />
+              ))}
+            </ul>
+          </div>
+        ) : null}
 
         <ul className="space-y-1">
           {GLOBAL_NAV.map((item) => (
