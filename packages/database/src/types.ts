@@ -181,6 +181,116 @@ export type Database = {
         }
         Relationships: []
       }
+      roles: {
+        Row: {
+          created_at: string
+          default_app_role: Database["public"]["Enums"]["app_role"]
+          department: Database["public"]["Enums"]["app_department"]
+          id: string
+          name: string
+          rank: Database["public"]["Enums"]["role_rank"]
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          default_app_role: Database["public"]["Enums"]["app_role"]
+          department: Database["public"]["Enums"]["app_department"]
+          id?: string
+          name: string
+          rank: Database["public"]["Enums"]["role_rank"]
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          default_app_role?: Database["public"]["Enums"]["app_role"]
+          department?: Database["public"]["Enums"]["app_department"]
+          id?: string
+          name?: string
+          rank?: Database["public"]["Enums"]["role_rank"]
+          slug?: string
+        }
+        Relationships: []
+      }
+      stores: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      targets: {
+        Row: {
+          actual_value: number | null
+          assigned_by_user_id: string | null
+          assigned_to_user_id: string
+          created_at: string
+          id: string
+          metric: string
+          notes: string | null
+          period_end: string
+          period_start: string
+          store_id: string
+          target_value: number
+          updated_at: string
+        }
+        Insert: {
+          actual_value?: number | null
+          assigned_by_user_id?: string | null
+          assigned_to_user_id: string
+          created_at?: string
+          id?: string
+          metric: string
+          notes?: string | null
+          period_end: string
+          period_start: string
+          store_id: string
+          target_value: number
+          updated_at?: string
+        }
+        Update: {
+          actual_value?: number | null
+          assigned_by_user_id?: string | null
+          assigned_to_user_id?: string
+          created_at?: string
+          id?: string
+          metric?: string
+          notes?: string | null
+          period_end?: string
+          period_start?: string
+          store_id?: string
+          target_value?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "targets_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           completed_at: string | null
@@ -252,40 +362,101 @@ export type Database = {
       }
       user_profiles: {
         Row: {
+          active: boolean
           created_at: string
           department: Database["public"]["Enums"]["app_department"] | null
           email: string | null
           full_name: string | null
           id: string
+          primary_store_id: string | null
           role: Database["public"]["Enums"]["app_role"]
+          role_id: string | null
           updated_at: string
         }
         Insert: {
+          active?: boolean
           created_at?: string
           department?: Database["public"]["Enums"]["app_department"] | null
           email?: string | null
           full_name?: string | null
           id: string
+          primary_store_id?: string | null
           role?: Database["public"]["Enums"]["app_role"]
+          role_id?: string | null
           updated_at?: string
         }
         Update: {
+          active?: boolean
           created_at?: string
           department?: Database["public"]["Enums"]["app_department"] | null
           email?: string | null
           full_name?: string | null
           id?: string
+          primary_store_id?: string | null
           role?: Database["public"]["Enums"]["app_role"]
+          role_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_profiles_primary_store_id_fkey"
+            columns: ["primary_store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_profiles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_store_access: {
+        Row: {
+          granted_at: string
+          granted_by: string | null
+          store_id: string
+          user_id: string
+        }
+        Insert: {
+          granted_at?: string
+          granted_by?: string | null
+          store_id: string
+          user_id: string
+        }
+        Update: {
+          granted_at?: string
+          granted_by?: string | null
+          store_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_store_access_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      current_app_role: {
+        Args: never
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      current_user_has_store_access: {
+        Args: { p_store_id: string }
+        Returns: boolean
+      }
+      current_user_is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       app_department: "ops" | "sales" | "service" | "parts" | "fni" | "admin"
@@ -311,6 +482,7 @@ export type Database = {
         | "monthly"
         | "quarterly"
         | "yearly"
+      role_rank: "owner" | "manager" | "senior" | "employee"
       task_source:
         | "handwritten"
         | "calendar"
@@ -478,6 +650,7 @@ export const Constants = {
         "quarterly",
         "yearly",
       ],
+      role_rank: ["owner", "manager", "senior", "employee"],
       task_source: [
         "handwritten",
         "calendar",
