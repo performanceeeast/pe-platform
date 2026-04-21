@@ -151,12 +151,27 @@ importers:
 
   apps/portal:
     dependencies:
+      '@pe/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
       '@pe/branding':
         specifier: workspace:*
         version: link:../../packages/branding
+      '@pe/database':
+        specifier: workspace:*
+        version: link:../../packages/database
       '@pe/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@supabase/ssr':
+        specifier: 0.5.1
+        version: 0.5.1(@supabase/supabase-js@2.45.4)
+      '@supabase/supabase-js':
+        specifier: 2.45.4
+        version: 2.45.4
+      lucide-react:
+        specifier: 0.453.0
+        version: 0.453.0(react@18.3.1)
       next:
         specifier: 14.2.15
         version: 14.2.15(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -166,6 +181,9 @@ importers:
       react-dom:
         specifier: 18.3.1
         version: 18.3.1(react@18.3.1)
+      zod:
+        specifier: 3.23.8
+        version: 3.23.8
     devDependencies:
       '@pe/config':
         specifier: workspace:*
@@ -197,6 +215,9 @@ importers:
       tailwindcss:
         specifier: 3.4.13
         version: 3.4.13
+      tailwindcss-animate:
+        specifier: 1.0.7
+        version: 1.0.7(tailwindcss@3.4.13)
       typescript:
         specifier: 5.6.2
         version: 5.6.2

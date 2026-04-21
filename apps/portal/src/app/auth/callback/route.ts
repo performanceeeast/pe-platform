@@ -3,19 +3,15 @@ import { createClient } from '@pe/database/server';
 import { roleForEmail } from '@pe/auth';
 
 /**
- * OAuth + magic-link callback. Exchanges the code for a session, then ensures
- * the user has a user_profiles row.
- *
- * First-login behaviour (INSERT):
- *   role = roleForEmail(email) — owner if OWNER_EMAIL matches, else employee.
- * Subsequent logins (UPDATE):
- *   Only refresh email/full_name. The assigned role/role_id/primary_store is
- *   managed by the admin UI and must not be clobbered.
+ * OAuth + magic-link callback for the portal. Mirrors the ops callback:
+ * first login creates the user_profiles row with an owner/employee default;
+ * subsequent logins only refresh email/full_name so admin-assigned role and
+ * store access survive.
  */
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/today';
+  const next = searchParams.get('next') ?? '/';
   const errorDescription = searchParams.get('error_description');
 
   if (errorDescription) {
