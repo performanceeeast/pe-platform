@@ -1,4 +1,4 @@
-import { Home, BookOpen, Target, type LucideIcon } from 'lucide-react';
+import { Home, BookOpen, Target, Users, type LucideIcon } from 'lucide-react';
 
 export type NavItem = {
   href: string;
@@ -13,6 +13,10 @@ export type NavItem = {
 export const GLOBAL_NAV: NavItem[] = [
   { href: '/resources', label: 'Resources', icon: BookOpen },
   { href: '/targets', label: 'Targets', icon: Target },
+];
+
+export const ADMIN_NAV: NavItem[] = [
+  { href: '/admin/users', label: 'Users', icon: Users },
 ];
 
 export const HOME_ICON: LucideIcon = Home;

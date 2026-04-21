@@ -14,7 +14,7 @@ export default async function AuthedLayout({ children }: { children: React.React
 
   return (
     <div className="flex min-h-screen bg-background">
-      <SidebarNav homeHref={landing} homeLabel="Home" />
+      <SidebarNav homeHref={landing} homeLabel="Home" isAdmin={ctx.isAdmin} />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-background/95 px-4 backdrop-blur md:px-6">
           <Link href={landing} className="md:hidden" aria-label="Performance East portal home">
