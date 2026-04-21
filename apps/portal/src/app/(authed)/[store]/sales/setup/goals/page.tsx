@@ -6,6 +6,7 @@ import { Button, PageHeader } from '@pe/ui';
 import { requireUserContext, getLandingPath } from '@pe/auth';
 import { createClient } from '@pe/database/server';
 import { GoalsForm, type GoalRow, type UnitTypeOption } from './goals-form';
+import { MonthYearPicker } from './month-year-picker';
 
 export const metadata: Metadata = { title: 'Monthly goals' };
 
@@ -22,14 +23,6 @@ function clampMonth(n: number): number {
 function clampYear(n: number): number {
   if (!Number.isFinite(n)) return new Date().getFullYear();
   return Math.min(2100, Math.max(2020, Math.trunc(n)));
-}
-
-function prevMonth(year: number, month: number): { year: number; month: number } {
-  return month === 1 ? { year: year - 1, month: 12 } : { year, month: month - 1 };
-}
-
-function nextMonth(year: number, month: number): { year: number; month: number } {
-  return month === 12 ? { year: year + 1, month: 1 } : { year, month: month + 1 };
 }
 
 interface GoalsPageProps {
@@ -87,11 +80,6 @@ export default async function GoalsSetupPage({ params, searchParams }: GoalsPage
     label: ut.label,
   }));
 
-  const prev = prevMonth(year, month);
-  const next = nextMonth(year, month);
-  const prevHref = `/${store.slug}/sales/setup/goals?year=${prev.year}&month=${prev.month}`;
-  const nextHref = `/${store.slug}/sales/setup/goals?year=${next.year}&month=${next.month}`;
-
   return (
     <div className="space-y-6">
       <PageHeader
@@ -99,12 +87,7 @@ export default async function GoalsSetupPage({ params, searchParams }: GoalsPage
         description={`${MONTHS[month - 1]} ${year}`}
         actions={
           <div className="flex items-center gap-2">
-            <Button asChild variant="outline" size="sm">
-              <Link href={prevHref}>&larr; Prev</Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href={nextHref}>Next &rarr;</Link>
-            </Button>
+            <MonthYearPicker storeSlug={store.slug} year={year} month={month} />
             <Button asChild variant="outline">
               <Link href={`/${store.slug}/sales/setup`}>Back to setup</Link>
             </Button>
