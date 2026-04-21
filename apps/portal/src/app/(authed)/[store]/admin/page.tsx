@@ -18,8 +18,8 @@ export default async function AdminHomePage() {
   const now = new Date();
   const todayStart = startOfDay(now).toISOString();
   const todayEnd = endOfDay(now).toISOString();
-  const firstName =
-    ctx.profile.full_name?.split(' ')[0] ?? ctx.user.email?.split('@')[0] ?? 'there';
+  const displayName =
+    ctx.profile.full_name ?? ctx.user.email?.split('@')[0] ?? 'there';
 
   const { data: openTasks } = await supabase
     .from('tasks')
@@ -61,7 +61,7 @@ export default async function AdminHomePage() {
   return (
     <div className="container max-w-5xl space-y-8 py-4 md:py-8">
       <PageHeader
-        title={`${greetingFor(now)}, ${firstName}`}
+        title={`${greetingFor(now)}, ${displayName}`}
         description={formatDayHeading(now)}
       />
 
