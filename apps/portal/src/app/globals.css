@@ -1,1 +1,37 @@
 @import '@pe/ui/styles/globals.css';
+
+/*
+ * Store-adaptive accent color. Components use `bg-store-500`, `text-store-500`,
+ * `hover:bg-store-600` etc.; the CSS variables below resolve to red
+ * (Goldsboro / default) or navy (Cedar Point) based on the data-store
+ * attribute set by <StoreTheme> in the authed layout.
+ *
+ * Values are RGB triplets (no commas) so Tailwind can apply `/<alpha-value>`.
+ */
+
+:root,
+[data-store='goldsboro'] {
+  --store-50: 254 242 243;
+  --store-100: 253 227 229;
+  --store-200: 251 197 201;
+  --store-300: 247 144 152;
+  --store-400: 239 82 93;
+  --store-500: 227 28 47;
+  --store-600: 196 18 36;
+  --store-700: 162 13 27;
+  --store-800: 130 11 22;
+  --store-900: 96 16 23;
+}
+
+[data-store='cedar-point'] {
+  --store-50: 240 245 250;
+  --store-100: 222 232 242;
+  --store-200: 189 210 229;
+  --store-300: 142 180 212;
+  --store-400: 86 139 180;
+  --store-500: 31 78 120;
+  --store-600: 22 58 90;
+  --store-700: 16 43 67;
+  --store-800: 11 31 48;
+  --store-900: 7 22 35;
+}

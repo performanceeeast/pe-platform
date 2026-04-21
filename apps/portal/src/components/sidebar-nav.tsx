@@ -33,7 +33,7 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
         className={cn(
           'flex items-center gap-3 rounded-md px-2 py-2 text-sm font-medium transition-colors',
           active
-            ? 'bg-pe-red-500 text-white hover:bg-pe-red-600'
+            ? 'bg-store-500 text-white hover:bg-store-600'
             : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
         )}
       >
@@ -102,7 +102,7 @@ export function SidebarNav({
                     className={cn(
                       'flex items-center gap-3 rounded-md px-2 py-2 text-sm font-medium transition-colors',
                       active
-                        ? 'bg-pe-red-500 text-white hover:bg-pe-red-600'
+                        ? 'bg-store-500 text-white hover:bg-store-600'
                         : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
                     )}
                   >
@@ -121,7 +121,7 @@ export function SidebarNav({
                 className={cn(
                   'flex items-center gap-3 rounded-md px-2 py-2 text-sm font-medium transition-colors',
                   isHomeActive
-                    ? 'bg-pe-red-500 text-white hover:bg-pe-red-600'
+                    ? 'bg-store-500 text-white hover:bg-store-600'
                     : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
                 )}
               >

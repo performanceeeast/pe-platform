@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { requireUserContext, getLandingPath } from '@pe/auth';
 import { SidebarNav } from '@/components/sidebar-nav';
 import { StoreSwitcher } from '@/components/store-switcher';
+import { StoreTheme } from '@/components/store-theme';
 import { UserMenu } from '@/components/user-menu';
 import logo from '../../../public/brand/logo.png';
 
@@ -12,17 +13,23 @@ export default async function AuthedLayout({ children }: { children: React.React
   const defaultDepartmentSlug = ctx.role?.department ?? 'admin';
   const roleLabel = ctx.role?.name ?? ctx.profile.role;
 
+  const storeSlugs = ctx.stores.map((s) => s.slug);
+
   return (
     <div className="flex min-h-screen bg-background">
+      <StoreTheme
+        storeSlugs={storeSlugs}
+        fallbackStoreSlug={ctx.primaryStore?.slug ?? null}
+      />
       <SidebarNav
         homeHref={landing}
         homeLabel="Home"
         isAdmin={ctx.isAdmin}
-        storeSlugs={ctx.stores.map((s) => s.slug)}
+        storeSlugs={storeSlugs}
         fallbackStoreSlug={ctx.primaryStore?.slug ?? null}
       />
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-background/95 px-4 backdrop-blur md:px-6">
+        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b-2 border-store-500 bg-background/95 px-4 backdrop-blur md:px-6">
           <Link href={landing} className="md:hidden" aria-label="Performance East portal home">
             <Image
               src={logo}
