@@ -9,17 +9,19 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  DEPARTMENTS,
 } from '@pe/ui';
 import { createTask } from '@/app/actions/tasks';
 
-const DEPARTMENT_LABELS: Record<(typeof DEPARTMENTS)[number], string> = {
+// PE Platform is Performance-East-only — legacy 'h2_grow' and 'personal'
+// enum values stay valid in the DB for any existing rows but aren't
+// selectable when creating new tasks.
+const TASK_DEPARTMENTS = ['sales', 'service', 'parts', 'fni', 'other'] as const;
+
+const DEPARTMENT_LABELS: Record<(typeof TASK_DEPARTMENTS)[number], string> = {
   sales: 'Sales',
   service: 'Service',
   parts: 'Parts',
   fni: 'F&I',
-  h2_grow: 'H2Grow',
-  personal: 'Personal',
   other: 'Other',
 };
 
@@ -33,7 +35,7 @@ const PRIORITIES: { value: '0' | '1' | '2' | '3'; label: string }[] = [
 export function QuickAdd() {
   const formRef = useRef<HTMLFormElement | null>(null);
   const [priority, setPriority] = useState<'0' | '1' | '2' | '3'>('2');
-  const [department, setDepartment] = useState<(typeof DEPARTMENTS)[number]>('other');
+  const [department, setDepartment] = useState<(typeof TASK_DEPARTMENTS)[number]>('other');
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -77,13 +79,13 @@ export function QuickAdd() {
           </Select>
           <Select
             value={department}
-            onValueChange={(v) => setDepartment(v as (typeof DEPARTMENTS)[number])}
+            onValueChange={(v) => setDepartment(v as (typeof TASK_DEPARTMENTS)[number])}
           >
             <SelectTrigger className="w-[8rem]" aria-label="Department">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {DEPARTMENTS.map((d) => (
+              {TASK_DEPARTMENTS.map((d) => (
                 <SelectItem key={d} value={d}>
                   {DEPARTMENT_LABELS[d]}
                 </SelectItem>
