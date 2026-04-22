@@ -34,4 +34,18 @@
   --store-700: 16 43 67;
   --store-800: 11 31 48;
   --store-900: 7 22 35;
+
+  /*
+   * shadcn primary → navy too, so buttons (Add, Save, Invite, etc.) and
+   * other --primary consumers track the store color. --ring follows so
+   * focus rings match. PE Navy = #1F4E78 → hsl(208 59% 30%).
+   */
+  --primary: 208 59% 30%;
+  --ring: 208 59% 30%;
+}
+
+.dark[data-store='cedar-point'],
+[data-store='cedar-point'].dark {
+  --primary: 208 55% 48%;
+  --ring: 208 55% 48%;
 }
