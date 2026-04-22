@@ -42,7 +42,7 @@ const SECTIONS: SetupSection[] = [
     label: 'PG&A tiers',
     description: 'Tiered spiff amounts by PG&A dollars per deal.',
     icon: DollarSign,
-    status: 'stub',
+    status: 'ready',
   },
   {
     slug: 'spiffs',
