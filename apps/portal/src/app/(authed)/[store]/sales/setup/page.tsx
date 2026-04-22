@@ -70,7 +70,7 @@ const SECTIONS: SetupSection[] = [
     label: 'Promo hub',
     description: 'Upload monthly rebate and financing PDFs.',
     icon: FileText,
-    status: 'stub',
+    status: 'ready',
   },
 ];
 
