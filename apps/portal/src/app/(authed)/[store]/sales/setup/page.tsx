@@ -49,7 +49,7 @@ const SECTIONS: SetupSection[] = [
     label: 'Back-end spiffs',
     description: 'Spiff per F&I product plus the all-products bonus.',
     icon: Package,
-    status: 'stub',
+    status: 'ready',
   },
   {
     slug: 'contests',

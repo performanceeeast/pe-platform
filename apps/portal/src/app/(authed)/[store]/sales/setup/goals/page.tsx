@@ -5,8 +5,8 @@ import type { Metadata } from 'next';
 import { Button, PageHeader } from '@pe/ui';
 import { requireUserContext, getLandingPath } from '@pe/auth';
 import { createClient } from '@pe/database/server';
+import { MonthYearPicker } from '@/components/month-year-picker';
 import { GoalsForm, type GoalRow, type UnitTypeOption } from './goals-form';
-import { MonthYearPicker } from './month-year-picker';
 
 export const metadata: Metadata = { title: 'Monthly goals' };
 
@@ -87,7 +87,11 @@ export default async function GoalsSetupPage({ params, searchParams }: GoalsPage
         description={`${MONTHS[month - 1]} ${year}`}
         actions={
           <div className="flex items-center gap-2">
-            <MonthYearPicker storeSlug={store.slug} year={year} month={month} />
+            <MonthYearPicker
+              basePath={`/${store.slug}/sales/setup/goals`}
+              year={year}
+              month={month}
+            />
             <Button asChild variant="outline">
               <Link href={`/${store.slug}/sales/setup`}>Back to setup</Link>
             </Button>

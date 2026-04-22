@@ -15,7 +15,8 @@ const MONTHS = [
 ];
 
 interface MonthYearPickerProps {
-  storeSlug: string;
+  /** URL the dropdowns navigate to, e.g. "/goldsboro/sales/setup/goals". */
+  basePath: string;
   year: number;
   month: number;
   /** How many years backward from the current year to offer. */
@@ -25,7 +26,7 @@ interface MonthYearPickerProps {
 }
 
 export function MonthYearPicker({
-  storeSlug,
+  basePath,
   year,
   month,
   yearsBack = 2,
@@ -41,9 +42,7 @@ export function MonthYearPicker({
   years.sort((a, b) => a - b);
 
   function go(nextYear: number, nextMonth: number) {
-    router.push(
-      `/${storeSlug}/sales/setup/goals?year=${nextYear}&month=${nextMonth}`,
-    );
+    router.push(`${basePath}?year=${nextYear}&month=${nextMonth}`);
   }
 
   return (
