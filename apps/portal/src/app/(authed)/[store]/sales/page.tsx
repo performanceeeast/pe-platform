@@ -16,6 +16,7 @@ import {
 import { requireUserContext, getLandingPath } from '@pe/auth';
 import { createClient } from '@pe/database/server';
 import { canManageSalesConfig } from '@/lib/sales-access';
+import { promoPublicUrl } from '@/lib/promo-url';
 
 export const metadata: Metadata = { title: 'Sales' };
 
@@ -204,18 +205,13 @@ export default async function SalesDeptPage({ params }: SalesPageProps) {
           }))}
         />
         <PromosCard
-          rows={activePromos.map((p) => {
-            const { data } = supabase.storage
-              .from('promo-docs')
-              .getPublicUrl(p.storage_path);
-            return {
-              id: p.id,
-              title: p.title,
-              publicUrl: data.publicUrl,
-              effectiveStart: p.effective_start,
-              effectiveEnd: p.effective_end,
-            };
-          })}
+          rows={activePromos.map((p) => ({
+            id: p.id,
+            title: p.title,
+            publicUrl: promoPublicUrl(p.storage_path),
+            effectiveStart: p.effective_start,
+            effectiveEnd: p.effective_end,
+          }))}
         />
       </div>
     </div>
