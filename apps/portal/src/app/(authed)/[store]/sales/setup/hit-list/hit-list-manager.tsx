@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { useParams } from 'next/navigation';
 import { Trash2, Upload, Download } from 'lucide-react';
 import { Button, Input, Label } from '@pe/ui';
@@ -8,6 +8,7 @@ import {
   importHitList,
   deleteHitListRow,
   clearUnsoldHitList,
+  updateHitListSpiffs,
   type ActionResult,
   type ImportResult,
 } from './actions';
@@ -50,9 +51,27 @@ export function HitListManager({ storeId, rows }: HitListManagerProps) {
 
   const [importPending, startImport] = useTransition();
   const [rowPending, startRow] = useTransition();
+  const [savePending, startSave] = useTransition();
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [rowResult, setRowResult] = useState<ActionResult | null>(null);
+  const [saveResult, setSaveResult] = useState<ActionResult | null>(null);
+  const [bulkValue, setBulkValue] = useState<string>('');
+
+  // Working copy of spiff amounts, keyed by row id. Reset whenever the
+  // underlying list reloads (after import or delete).
+  const [spiffDraft, setSpiffDraft] = useState<Record<string, number>>(() =>
+    Object.fromEntries(rows.map((r) => [r.id, r.spiffAmount])),
+  );
+  useEffect(() => {
+    setSpiffDraft(Object.fromEntries(rows.map((r) => [r.id, r.spiffAmount])));
+    setSaveResult(null);
+  }, [rows]);
+
+  const dirtyIds = rows
+    .filter((r) => (spiffDraft[r.id] ?? 0) !== r.spiffAmount)
+    .map((r) => r.id);
+  const hasDirty = dirtyIds.length > 0;
 
   function onImport(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -88,6 +107,37 @@ export function HitListManager({ storeId, rows }: HitListManagerProps) {
     });
   }
 
+  function onSaveSpiffs() {
+    const dirty = rows
+      .filter((r) => (spiffDraft[r.id] ?? 0) !== r.spiffAmount)
+      .map((r) => ({ id: r.id, spiff: spiffDraft[r.id] ?? 0 }));
+
+    if (dirty.length === 0) return;
+
+    const formData = new FormData();
+    formData.set('storeId', storeId);
+    dirty.forEach((d, idx) => {
+      formData.set(`row[${idx}].id`, d.id);
+      formData.set(`row[${idx}].spiffAmount`, String(d.spiff));
+    });
+    startSave(async () => {
+      const res = await updateHitListSpiffs(formData);
+      setSaveResult(res);
+    });
+  }
+
+  function applyBulk() {
+    const n = Number(bulkValue);
+    if (!Number.isFinite(n) || n < 0) return;
+    setSpiffDraft((prev) => {
+      const next = { ...prev };
+      for (const r of rows) {
+        if (!r.soldByUserId) next[r.id] = n;
+      }
+      return next;
+    });
+  }
+
   function downloadTemplate() {
     const blob = new Blob([TEMPLATE_CSV], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -106,7 +156,7 @@ export function HitListManager({ storeId, rows }: HitListManagerProps) {
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
       <section className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-sm font-semibold">
             Current hit list
             <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-xs font-normal text-muted-foreground">
@@ -114,17 +164,44 @@ export function HitListManager({ storeId, rows }: HitListManagerProps) {
               {soldCount > 0 ? ` \u00b7 ${soldCount} sold` : ''}
             </span>
           </h2>
-          {unsoldCount > 0 ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={onClearUnsold}
-              disabled={rowPending}
-            >
-              Clear unsold
-            </Button>
-          ) : null}
+          <div className="flex items-center gap-2">
+            {unsoldCount > 0 ? (
+              <>
+                <Label htmlFor="bulkSpiff" className="text-xs text-muted-foreground">
+                  Set all unsold to $
+                </Label>
+                <Input
+                  id="bulkSpiff"
+                  type="number"
+                  min={0}
+                  step="1"
+                  value={bulkValue}
+                  onChange={(e) => setBulkValue(e.target.value)}
+                  className="h-8 w-24 text-right"
+                  inputMode="numeric"
+                  placeholder="0"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={applyBulk}
+                  disabled={!bulkValue}
+                >
+                  Apply
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={onClearUnsold}
+                  disabled={rowPending}
+                >
+                  Clear unsold
+                </Button>
+              </>
+            ) : null}
+          </div>
         </div>
 
         {rows.length === 0 ? (
@@ -158,8 +235,27 @@ export function HitListManager({ storeId, rows }: HitListManagerProps) {
                       <td className="px-3 py-2 text-right tabular-nums">
                         {age !== null ? `${age}d` : '\u2014'}
                       </td>
-                      <td className="px-3 py-2 text-right tabular-nums">
-                        {row.spiffAmount > 0 ? `$${row.spiffAmount}` : '\u2014'}
+                      <td className="px-3 py-2">
+                        {sold ? (
+                          <div className="text-right tabular-nums">
+                            {row.spiffAmount > 0 ? `$${row.spiffAmount}` : '\u2014'}
+                          </div>
+                        ) : (
+                          <Input
+                            type="number"
+                            min={0}
+                            step="1"
+                            value={spiffDraft[row.id] ?? 0}
+                            onChange={(e) =>
+                              setSpiffDraft((prev) => ({
+                                ...prev,
+                                [row.id]: e.target.value === '' ? 0 : Number(e.target.value),
+                              }))
+                            }
+                            className="ml-auto h-8 w-24 text-right"
+                            inputMode="numeric"
+                          />
+                        )}
                       </td>
                       <td className="px-3 py-2 text-xs">
                         {sold ? (
@@ -192,6 +288,29 @@ export function HitListManager({ storeId, rows }: HitListManagerProps) {
             </table>
           </div>
         )}
+
+        {rows.length > 0 ? (
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm">
+              {saveResult?.ok ? (
+                <span className="text-green-600">{saveResult.message}</span>
+              ) : saveResult && !saveResult.ok ? (
+                <span className="text-red-600">{saveResult.error}</span>
+              ) : hasDirty ? (
+                <span className="text-muted-foreground">
+                  {dirtyIds.length} unsaved change{dirtyIds.length === 1 ? '' : 's'}
+                </span>
+              ) : null}
+            </div>
+            <Button
+              type="button"
+              onClick={onSaveSpiffs}
+              disabled={savePending || !hasDirty}
+            >
+              {savePending ? 'Saving\u2026' : 'Save spiffs'}
+            </Button>
+          </div>
+        ) : null}
 
         {rowResult?.ok ? (
           <p className="text-sm text-green-600">{rowResult.message}</p>

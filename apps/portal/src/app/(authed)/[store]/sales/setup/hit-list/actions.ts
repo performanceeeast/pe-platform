@@ -225,6 +225,72 @@ export async function deleteHitListRow(formData: FormData): Promise<ActionResult
   return { ok: true, message: 'Row removed.' };
 }
 
+const spiffRowSchema = z.object({
+  id: z.string().uuid(),
+  spiffAmount: z.coerce.number().nonnegative(),
+});
+
+const updateSpiffsSchema = z.object({
+  storeId: z.string().uuid(),
+  rows: z.array(spiffRowSchema),
+});
+
+export async function updateHitListSpiffs(formData: FormData): Promise<ActionResult> {
+  const ctx = await requireUserContext();
+
+  const storeId = formData.get('storeId');
+
+  const rowEntries: Record<number, Record<string, FormDataEntryValue>> = {};
+  for (const [key, value] of formData.entries()) {
+    const match = /^row\[(\d+)\]\.(\w+)$/.exec(key);
+    if (!match) continue;
+    const idx = Number(match[1]);
+    const field = match[2]!;
+    if (!rowEntries[idx]) rowEntries[idx] = {};
+    rowEntries[idx]![field] = value;
+  }
+  const rows = Object.keys(rowEntries)
+    .sort((a, b) => Number(a) - Number(b))
+    .map((k) => rowEntries[Number(k)]);
+
+  const parsed = updateSpiffsSchema.safeParse({ storeId, rows });
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid input.' };
+  }
+
+  if (!ctx.stores.some((s) => s.id === parsed.data.storeId)) {
+    return { ok: false, error: 'No access to this store.' };
+  }
+
+  if (parsed.data.rows.length === 0) {
+    return { ok: true, message: 'No changes.' };
+  }
+
+  const supabase = createClient();
+
+  // One update per row. With a 120-day hit list these are dozens, not
+  // thousands, so the round-trip cost is acceptable and keeps the query
+  // simple vs. a bulk UPDATE FROM.
+  let updated = 0;
+  for (const r of parsed.data.rows) {
+    const { error } = await supabase
+      .from('aged_inventory')
+      .update({ spiff_amount: r.spiffAmount })
+      .eq('id', r.id)
+      .eq('store_id', parsed.data.storeId);
+    if (error) return { ok: false, error: error.message };
+    updated++;
+  }
+
+  const store = ctx.stores.find((s) => s.id === parsed.data.storeId);
+  if (store) revalidatePath(`/${store.slug}/sales/setup/hit-list`);
+
+  return {
+    ok: true,
+    message: `Saved ${updated} spiff${updated === 1 ? '' : 's'}.`,
+  };
+}
+
 const clearUnsoldSchema = z.object({
   storeId: z.string().uuid(),
 });
