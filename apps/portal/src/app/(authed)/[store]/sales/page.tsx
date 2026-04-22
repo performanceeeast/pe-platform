@@ -24,7 +24,8 @@ export default async function SalesDeptPage({ params }: SalesPageProps) {
   const store = ctx.stores.find((s) => s.slug === params.store);
   if (!store) redirect(getLandingPath(ctx));
 
-  if (!ctx.isAdmin && ctx.role?.department !== 'sales') {
+  const isFni = ctx.role?.department === 'fni';
+  if (!ctx.isAdmin && ctx.role?.department !== 'sales' && !isFni) {
     redirect(getLandingPath(ctx));
   }
 
@@ -37,11 +38,16 @@ export default async function SalesDeptPage({ params }: SalesPageProps) {
         title={`Sales · ${store.name}`}
         description={`Signed in as ${roleName}.`}
         actions={
-          canSetup ? (
+          <div className="flex items-center gap-2">
             <Button asChild>
-              <Link href={`/${store.slug}/sales/setup`}>Setup</Link>
+              <Link href={`/${store.slug}/sales/deals/new`}>Log a deal</Link>
             </Button>
-          ) : null
+            {canSetup ? (
+              <Button asChild variant="outline">
+                <Link href={`/${store.slug}/sales/setup`}>Setup</Link>
+              </Button>
+            ) : null}
+          </div>
         }
       />
 
