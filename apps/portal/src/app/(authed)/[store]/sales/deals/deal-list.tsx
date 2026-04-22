@@ -66,36 +66,47 @@ export function DealList({ rows, showSalesperson, storeSlug }: DealListProps) {
           </tr>
         </thead>
         <tbody className="divide-y">
-          {rows.map((r) => (
-            <tr key={r.id}>
-              <td className="px-3 py-2 tabular-nums">{r.dealDate}</td>
-              <td className="px-3 py-2 font-mono">{r.dealNumber ?? '\u2014'}</td>
-              <td className="px-3 py-2 font-medium">{r.customerName}</td>
-              {showSalesperson ? (
-                <td className="px-3 py-2">{r.salespersonName ?? '\u2014'}</td>
-              ) : null}
-              <td className="px-3 py-2">{r.unitTypeLabel ?? '\u2014'}</td>
-              <td className="px-3 py-2 font-mono">{r.stockNumber ?? '\u2014'}</td>
-              <td className="px-3 py-2 text-right tabular-nums">
-                {r.pgaTotal !== null ? `$${r.pgaTotal.toLocaleString()}` : '\u2014'}
-              </td>
-              <td className="px-3 py-2">
-                <span
-                  className={cn(
-                    'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium',
-                    STATUS_CLASS[r.status],
-                  )}
-                >
-                  {STATUS_LABEL[r.status]}
-                </span>
-              </td>
-            </tr>
-          ))}
+          {rows.map((r) => {
+            const href = `/${storeSlug}/sales/deals/${r.id}`;
+            return (
+              <tr key={r.id} className="hover:bg-muted/30">
+                <td className="px-3 py-2 tabular-nums">{r.dealDate}</td>
+                <td className="px-3 py-2 font-mono">
+                  <Link href={href} className="hover:underline">
+                    {r.dealNumber ?? '\u2014'}
+                  </Link>
+                </td>
+                <td className="px-3 py-2 font-medium">
+                  <Link href={href} className="hover:underline">
+                    {r.customerName}
+                  </Link>
+                </td>
+                {showSalesperson ? (
+                  <td className="px-3 py-2">{r.salespersonName ?? '\u2014'}</td>
+                ) : null}
+                <td className="px-3 py-2">{r.unitTypeLabel ?? '\u2014'}</td>
+                <td className="px-3 py-2 font-mono">{r.stockNumber ?? '\u2014'}</td>
+                <td className="px-3 py-2 text-right tabular-nums">
+                  {r.pgaTotal !== null ? `$${r.pgaTotal.toLocaleString()}` : '\u2014'}
+                </td>
+                <td className="px-3 py-2">
+                  <span
+                    className={cn(
+                      'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium',
+                      STATUS_CLASS[r.status],
+                    )}
+                  >
+                    {STATUS_LABEL[r.status]}
+                  </span>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
       <p className="border-t bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
-        Click a row in a future build to open the deal detail and complete the
-        back-end.{' '}
+        Click a deal # or customer name to open the detail and complete
+        finance back-end.{' '}
         <Link
           href={`/${storeSlug}/sales/deals/new`}
           className="underline underline-offset-2"
