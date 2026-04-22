@@ -56,7 +56,7 @@ const SECTIONS: SetupSection[] = [
     label: 'Contests',
     description: 'Monthly contest setup and winner tracking.',
     icon: Trophy,
-    status: 'stub',
+    status: 'ready',
   },
   {
     slug: 'hit-list',
