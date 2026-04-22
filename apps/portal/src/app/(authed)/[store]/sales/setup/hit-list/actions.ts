@@ -22,6 +22,9 @@ export type ImportResult =
 function canonicalKey(k: string): string {
   const norm = k.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
   if (norm.includes('stock')) return 'stock_number';
+  if (norm === 'year' || norm === 'modelyear' || norm === 'yearmodel') return 'year';
+  if (norm === 'make' || norm === 'brand' || norm === 'manufacturer') return 'make';
+  if (norm.includes('model')) return 'model_name';
   if (norm.includes('desc')) return 'description';
   if (norm.includes('date')) return 'date_in_stock';
   if (norm.includes('spiff') || norm === 'amount' || norm === 'bonus') {
@@ -126,8 +129,12 @@ export async function importHitList(formData: FormData): Promise<ImportResult> {
       for (const [k, v] of Object.entries(r)) {
         byKey[canonicalKey(k)] = v;
       }
+      const yearNum = parseNum(byKey.year);
       return {
         stock_number: parseStr(byKey.stock_number),
+        year: yearNum > 0 ? Math.trunc(yearNum) : null,
+        make: parseStr(byKey.make),
+        model_name: parseStr(byKey.model_name),
         description: parseStr(byKey.description),
         date_in_stock: parseDate(byKey.date_in_stock),
         spiff_amount: parseNum(byKey.spiff_amount),
@@ -166,6 +173,9 @@ export async function importHitList(formData: FormData): Promise<ImportResult> {
   const upsertRows = finalRows.map((r) => ({
     store_id: storeId,
     stock_number: r.stock_number,
+    year: r.year,
+    make: r.make || null,
+    model_name: r.model_name || null,
     description: r.description || null,
     date_in_stock: r.date_in_stock,
     spiff_amount: r.spiff_amount,

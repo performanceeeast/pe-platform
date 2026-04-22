@@ -16,6 +16,9 @@ import {
 export interface HitListRow {
   id: string;
   stockNumber: string;
+  year: number | null;
+  make: string | null;
+  modelName: string | null;
   description: string | null;
   dateInStock: string | null;
   spiffAmount: number;
@@ -23,6 +26,12 @@ export interface HitListRow {
   soldByName: string | null;
   soldAt: string | null;
   notes: string | null;
+}
+
+function unitLabel(row: HitListRow): string {
+  const parts = [row.year, row.make, row.modelName].filter(Boolean);
+  if (parts.length > 0) return parts.join(' ');
+  return row.description ?? '\u2014';
 }
 
 interface HitListManagerProps {
@@ -39,9 +48,9 @@ function daysSince(dateStr: string | null): number | null {
 }
 
 const TEMPLATE_CSV = [
-  'stock_number,description,date_in_stock,spiff_amount,notes',
-  '12345,2024 Honda CRF450R,2024-11-15,200,',
-  '67890,2023 Yamaha Wolverine RMAX2,2024-09-01,300,Aged 200+ days',
+  'stock_number,year,make,model_name,date_in_stock,spiff_amount,notes',
+  '12345,2024,Honda,CRF450R,2024-11-15,200,',
+  '67890,2023,Yamaha,Wolverine RMAX2,2024-09-01,300,Aged 200+ days',
   '',
 ].join('\r\n');
 
@@ -214,7 +223,7 @@ export function HitListManager({ storeId, rows }: HitListManagerProps) {
               <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
                 <tr>
                   <th className="px-3 py-2 text-left font-semibold">Stock #</th>
-                  <th className="px-3 py-2 text-left font-semibold">Description</th>
+                  <th className="px-3 py-2 text-left font-semibold">Unit</th>
                   <th className="px-3 py-2 text-right font-semibold">Age</th>
                   <th className="px-3 py-2 text-right font-semibold">Spiff $</th>
                   <th className="px-3 py-2 text-left font-semibold">Sold</th>
@@ -231,7 +240,7 @@ export function HitListManager({ storeId, rows }: HitListManagerProps) {
                       className={sold ? 'bg-muted/30 text-muted-foreground' : undefined}
                     >
                       <td className="px-3 py-2 font-mono font-medium">{row.stockNumber}</td>
-                      <td className="px-3 py-2">{row.description ?? '\u2014'}</td>
+                      <td className="px-3 py-2">{unitLabel(row)}</td>
                       <td className="px-3 py-2 text-right tabular-nums">
                         {age !== null ? `${age}d` : '\u2014'}
                       </td>
@@ -337,8 +346,9 @@ export function HitListManager({ storeId, rows }: HitListManagerProps) {
               required
             />
             <p className="mt-1 text-xs text-muted-foreground">
-              Columns: stock_number (required), description, date_in_stock, spiff_amount, notes.
-              Existing stock numbers get updated; sold-by history is kept.
+              Columns: stock_number (required), year, make, model_name, date_in_stock,
+              spiff_amount, notes. Existing stock numbers get updated; sold-by history
+              is kept.
             </p>
           </div>
 

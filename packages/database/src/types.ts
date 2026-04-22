@@ -21,6 +21,8 @@ export type Database = {
           date_in_stock: string | null
           description: string | null
           id: string
+          make: string | null
+          model_name: string | null
           notes: string | null
           sold_at: string | null
           sold_by_user_id: string | null
@@ -28,6 +30,7 @@ export type Database = {
           stock_number: string
           store_id: string
           updated_at: string
+          year: number | null
         }
         Insert: {
           created_at?: string
@@ -35,6 +38,8 @@ export type Database = {
           date_in_stock?: string | null
           description?: string | null
           id?: string
+          make?: string | null
+          model_name?: string | null
           notes?: string | null
           sold_at?: string | null
           sold_by_user_id?: string | null
@@ -42,6 +47,7 @@ export type Database = {
           stock_number: string
           store_id: string
           updated_at?: string
+          year?: number | null
         }
         Update: {
           created_at?: string
@@ -49,6 +55,8 @@ export type Database = {
           date_in_stock?: string | null
           description?: string | null
           id?: string
+          make?: string | null
+          model_name?: string | null
           notes?: string | null
           sold_at?: string | null
           sold_by_user_id?: string | null
@@ -56,6 +64,7 @@ export type Database = {
           stock_number?: string
           store_id?: string
           updated_at?: string
+          year?: number | null
         }
         Relationships: [
           {

@@ -23,7 +23,7 @@ export default async function HitListSetupPage({ params }: HitListPageProps) {
 
   const { data: items } = await supabase
     .from('aged_inventory')
-    .select('id, stock_number, description, date_in_stock, spiff_amount, sold_by_user_id, sold_at, notes')
+    .select('id, stock_number, year, make, model_name, description, date_in_stock, spiff_amount, sold_by_user_id, sold_at, notes')
     .eq('store_id', store.id)
     .order('sold_at', { ascending: false, nullsFirst: true })
     .order('date_in_stock', { ascending: true, nullsFirst: false });
@@ -50,6 +50,9 @@ export default async function HitListSetupPage({ params }: HitListPageProps) {
   const rows: HitListRow[] = (items ?? []).map((i) => ({
     id: i.id,
     stockNumber: i.stock_number,
+    year: i.year,
+    make: i.make,
+    modelName: i.model_name,
     description: i.description,
     dateInStock: i.date_in_stock,
     spiffAmount: Number(i.spiff_amount),
