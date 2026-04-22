@@ -367,6 +367,7 @@ export type Database = {
           pga_total: number | null
           salesperson_user_id: string | null
           status: Database["public"]["Enums"]["deal_status"]
+          stock_number: string | null
           store_id: string
           unit_count: number
           unit_type_id: string | null
@@ -386,6 +387,7 @@ export type Database = {
           pga_total?: number | null
           salesperson_user_id?: string | null
           status?: Database["public"]["Enums"]["deal_status"]
+          stock_number?: string | null
           store_id: string
           unit_count?: number
           unit_type_id?: string | null
@@ -405,6 +407,7 @@ export type Database = {
           pga_total?: number | null
           salesperson_user_id?: string | null
           status?: Database["public"]["Enums"]["deal_status"]
+          stock_number?: string | null
           store_id?: string
           unit_count?: number
           unit_type_id?: string | null

@@ -5,7 +5,7 @@ import type { Metadata } from 'next';
 import { Button, PageHeader } from '@pe/ui';
 import { requireUserContext, getLandingPath } from '@pe/auth';
 import { createClient } from '@pe/database/server';
-import { HitListForm, type HitListRow, type SalespersonOption } from './hit-list-form';
+import { HitListManager, type HitListRow } from './hit-list-manager';
 
 export const metadata: Metadata = { title: 'Hit list' };
 
@@ -25,44 +25,45 @@ export default async function HitListSetupPage({ params }: HitListPageProps) {
     .from('aged_inventory')
     .select('id, stock_number, description, date_in_stock, spiff_amount, sold_by_user_id, sold_at, notes')
     .eq('store_id', store.id)
+    .order('sold_at', { ascending: false, nullsFirst: true })
     .order('date_in_stock', { ascending: true, nullsFirst: false });
 
-  const { data: accessRows } = await supabase
-    .from('user_store_access')
-    .select('user_id')
-    .eq('store_id', store.id);
-
-  const userIds = (accessRows ?? []).map((r) => r.user_id);
-  const { data: users } = userIds.length
-    ? await supabase
-        .from('user_profiles')
-        .select('id, full_name, email')
-        .in('id', userIds)
-        .eq('active', true)
-        .order('full_name', { nullsFirst: false })
-    : { data: [] };
-
-  const salespeople: SalespersonOption[] = (users ?? []).map((u) => ({
-    id: u.id,
-    label: u.full_name ?? u.email ?? 'Unknown',
-  }));
+  // Resolve sold-by names in one batched lookup.
+  const soldUserIds = Array.from(
+    new Set(
+      (items ?? [])
+        .map((i) => i.sold_by_user_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  );
+  const nameByUserId = new Map<string, string>();
+  if (soldUserIds.length > 0) {
+    const { data: users } = await supabase
+      .from('user_profiles')
+      .select('id, full_name, email')
+      .in('id', soldUserIds);
+    for (const u of users ?? []) {
+      nameByUserId.set(u.id, u.full_name ?? u.email ?? 'Unknown');
+    }
+  }
 
   const rows: HitListRow[] = (items ?? []).map((i) => ({
     id: i.id,
     stockNumber: i.stock_number,
-    description: i.description ?? '',
-    dateInStock: i.date_in_stock ?? '',
+    description: i.description,
+    dateInStock: i.date_in_stock,
     spiffAmount: Number(i.spiff_amount),
     soldByUserId: i.sold_by_user_id,
-    soldAt: i.sold_at ?? '',
-    notes: i.notes ?? '',
+    soldByName: i.sold_by_user_id ? nameByUserId.get(i.sold_by_user_id) ?? null : null,
+    soldAt: i.sold_at,
+    notes: i.notes,
   }));
 
   return (
     <div className="space-y-6">
       <PageHeader
         title={`Hit list · ${store.name}`}
-        description="Aged inventory with optional per-unit spiff. Mark sold by filling the Sold-by and Sold-on fields."
+        description="Upload aged inventory as CSV or XLSX. Sold-by attribution is set automatically when a matching stock number is logged on a deal."
         actions={
           <Button asChild variant="outline">
             <Link href={`/${store.slug}/sales/setup`}>Back to setup</Link>
@@ -71,7 +72,7 @@ export default async function HitListSetupPage({ params }: HitListPageProps) {
       />
 
       <div className="px-4 md:px-6">
-        <HitListForm storeId={store.id} rows={rows} salespeople={salespeople} />
+        <HitListManager storeId={store.id} rows={rows} />
       </div>
     </div>
   );
