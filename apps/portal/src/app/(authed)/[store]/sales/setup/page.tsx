@@ -63,7 +63,7 @@ const SECTIONS: SetupSection[] = [
     label: 'Hit list',
     description: 'Aged inventory over 120 days with sold-by tracking.',
     icon: Clock,
-    status: 'stub',
+    status: 'ready',
   },
   {
     slug: 'promos',
