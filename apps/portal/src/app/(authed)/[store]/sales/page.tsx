@@ -42,6 +42,9 @@ export default async function SalesDeptPage({ params }: SalesPageProps) {
             <Button asChild>
               <Link href={`/${store.slug}/sales/deals/new`}>Log a deal</Link>
             </Button>
+            <Button asChild variant="outline">
+              <Link href={`/${store.slug}/sales/deals`}>Deals</Link>
+            </Button>
             {canSetup ? (
               <Button asChild variant="outline">
                 <Link href={`/${store.slug}/sales/setup`}>Setup</Link>
