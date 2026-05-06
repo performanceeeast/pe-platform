@@ -182,6 +182,64 @@ export async function updateUser(formData: FormData): Promise<ActionResult> {
   return { ok: true, message: 'User updated.' };
 }
 
+const salespersonGrantSchema = z.object({
+  userId: z.string().uuid(),
+  on: z.enum(['true', 'false']).transform((v) => v === 'true'),
+});
+
+/**
+ * Toggle the additive `salesperson` role grant for a user. Used by the master
+ * user list so anyone (e.g. the Owner) can opt into appearing in salesperson
+ * dropdowns across the sales department without changing their primary role.
+ *
+ * Per the project's role model (see ONBOARDING.md), additive capabilities are
+ * granted via user_role_grants — never invent a combined primary role.
+ */
+export async function setSalespersonGrant(formData: FormData): Promise<ActionResult> {
+  await requireAdmin();
+
+  const parsed = salespersonGrantSchema.safeParse({
+    userId: formData.get('userId'),
+    on: formData.get('on'),
+  });
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid input.' };
+  }
+  const { userId, on } = parsed.data;
+
+  const admin = createAdminClient();
+
+  const { data: role, error: roleError } = await admin
+    .from('roles')
+    .select('id')
+    .eq('slug', 'salesperson')
+    .maybeSingle();
+  if (roleError || !role) {
+    return { ok: false, error: roleError?.message ?? 'Salesperson role not found.' };
+  }
+
+  if (on) {
+    const ctx = await requireAdmin();
+    const { error } = await admin
+      .from('user_role_grants')
+      .upsert(
+        { user_id: userId, role_id: role.id, granted_by: ctx.user.id },
+        { onConflict: 'user_id,role_id' },
+      );
+    if (error) return { ok: false, error: error.message };
+  } else {
+    const { error } = await admin
+      .from('user_role_grants')
+      .delete()
+      .eq('user_id', userId)
+      .eq('role_id', role.id);
+    if (error) return { ok: false, error: error.message };
+  }
+
+  revalidatePath('/admin/users');
+  return { ok: true, message: on ? 'Salesperson access granted.' : 'Salesperson access removed.' };
+}
+
 export async function deactivateAndReturn(formData: FormData) {
   const userId = formData.get('userId');
   if (typeof userId !== 'string') return;

@@ -3,13 +3,16 @@ import type { Metadata } from 'next';
 import { PageHeader } from '@pe/ui';
 import { createClient } from '@pe/database/server';
 import { InviteForm } from './invite-form';
+import { SalespersonToggle } from './salesperson-toggle';
+
+const SALESPERSON_ROLE_SLUGS = new Set(['salesperson', 'sales_associate']);
 
 export const metadata: Metadata = { title: 'User management' };
 
 export default async function AdminUsersPage() {
   const supabase = createClient();
 
-  const [profilesRes, rolesRes, storesRes, accessRes] = await Promise.all([
+  const [profilesRes, rolesRes, storesRes, accessRes, grantsRes] = await Promise.all([
     supabase
       .from('user_profiles')
       .select('id, full_name, email, role, role_id, primary_store_id, active')
@@ -18,14 +21,22 @@ export default async function AdminUsersPage() {
     supabase.from('roles').select('id, slug, name, department').order('name'),
     supabase.from('stores').select('id, slug, name').eq('active', true).order('name'),
     supabase.from('user_store_access').select('user_id, store_id'),
+    supabase.from('user_role_grants').select('user_id, role_id'),
   ]);
 
   const profiles = profilesRes.data ?? [];
   const roles = rolesRes.data ?? [];
   const stores = storesRes.data ?? [];
   const access = accessRes.data ?? [];
+  const grants = grantsRes.data ?? [];
 
   const roleById = new Map(roles.map((r) => [r.id, r]));
+  const salespersonRoleIds = new Set(
+    roles.filter((r) => SALESPERSON_ROLE_SLUGS.has(r.slug)).map((r) => r.id),
+  );
+  const grantedSalespeople = new Set(
+    grants.filter((g) => salespersonRoleIds.has(g.role_id)).map((g) => g.user_id),
+  );
   const storeById = new Map(stores.map((s) => [s.id, s]));
   const accessByUser = new Map<string, string[]>();
   for (const row of access) {
@@ -61,6 +72,9 @@ export default async function AdminUsersPage() {
                   <th className="px-3 py-2 font-medium">Email</th>
                   <th className="px-3 py-2 font-medium">Role</th>
                   <th className="px-3 py-2 font-medium">Stores</th>
+                  <th className="px-3 py-2 font-medium" title="Show in salesperson dropdowns across the sales department">
+                    Salesperson
+                  </th>
                   <th className="px-3 py-2 font-medium">Status</th>
                   <th className="px-3 py-2 font-medium"></th>
                 </tr>
@@ -68,7 +82,7 @@ export default async function AdminUsersPage() {
               <tbody>
                 {profiles.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-3 py-6 text-center text-muted-foreground">
+                    <td colSpan={7} className="px-3 py-6 text-center text-muted-foreground">
                       No users yet. Invite someone above.
                     </td>
                   </tr>
@@ -79,12 +93,21 @@ export default async function AdminUsersPage() {
                       .map((id) => storeById.get(id)?.name)
                       .filter(Boolean)
                       .join(', ');
+                    const isPrimarySales = role ? SALESPERSON_ROLE_SLUGS.has(role.slug) : false;
+                    const hasGrant = grantedSalespeople.has(p.id);
                     return (
                       <tr key={p.id} className="border-t">
                         <td className="px-3 py-2">{p.full_name ?? '—'}</td>
                         <td className="px-3 py-2 font-mono text-xs">{p.email ?? '—'}</td>
                         <td className="px-3 py-2">{role?.name ?? p.role}</td>
                         <td className="px-3 py-2">{userStores || '—'}</td>
+                        <td className="px-3 py-2">
+                          <SalespersonToggle
+                            userId={p.id}
+                            initial={hasGrant}
+                            implied={isPrimarySales}
+                          />
+                        </td>
                         <td className="px-3 py-2">
                           {p.active ? (
                             <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200">

@@ -15,7 +15,7 @@ import {
 } from '@pe/ui';
 import { requireUserContext, getLandingPath } from '@pe/auth';
 import { createClient } from '@pe/database/server';
-import { hasAnyRole } from '@/lib/sales-access';
+import { hasAnyRole, listSalespeople } from '@/lib/sales-access';
 import { MonthYearPicker } from '@/components/month-year-picker';
 import {
   TrafficCard,
@@ -97,7 +97,7 @@ export default async function SalesManagerPage({ params, searchParams }: PagePro
     { data: appts },
     { data: traffic },
     { data: leadSources },
-    { data: salespeople },
+    salespeople,
   ] = await Promise.all([
     supabase
       .from('deals')
@@ -124,12 +124,7 @@ export default async function SalesManagerPage({ params, searchParams }: PagePro
       .eq('store_id', store.id)
       .eq('active', true)
       .order('sort_order'),
-    supabase
-      .from('user_profiles')
-      .select('id, full_name, email, role:roles!inner(department)')
-      .eq('active', true)
-      .eq('role.department', 'sales')
-      .order('full_name'),
+    listSalespeople(),
   ]);
 
   // Pipeline counts by status.
@@ -164,7 +159,7 @@ export default async function SalesManagerPage({ params, searchParams }: PagePro
   for (const d of agedDeals) if (d.salesperson_user_id) userIds.add(d.salesperson_user_id);
   for (const id of apptByUser.keys()) userIds.add(id);
   for (const t of traffic ?? []) if (t.salesperson_user_id) userIds.add(t.salesperson_user_id);
-  for (const sp of salespeople ?? []) userIds.add(sp.id);
+  for (const sp of salespeople) userIds.add(sp.id);
 
   const nameById = new Map<string, string>();
   if (userIds.size > 0) {
@@ -202,7 +197,7 @@ export default async function SalesManagerPage({ params, searchParams }: PagePro
     notes: t.notes,
   }));
 
-  const salespersonOptions = (salespeople ?? []).map((sp) => ({
+  const salespersonOptions = salespeople.map((sp) => ({
     id: sp.id,
     label: nameById.get(sp.id) ?? sp.full_name ?? sp.email ?? 'Unknown',
   }));
