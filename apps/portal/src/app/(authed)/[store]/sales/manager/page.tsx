@@ -17,6 +17,11 @@ import { requireUserContext, getLandingPath } from '@pe/auth';
 import { createClient } from '@pe/database/server';
 import { hasAnyRole } from '@/lib/sales-access';
 import { MonthYearPicker } from '@/components/month-year-picker';
+import {
+  TrafficCard,
+  type SourceSummaryRow,
+  type TrafficRow,
+} from './traffic-card';
 
 export const metadata: Metadata = { title: 'Sales pipeline' };
 
@@ -81,9 +86,19 @@ export default async function SalesManagerPage({ params, searchParams }: PagePro
   agedCutoff.setDate(agedCutoff.getDate() - AGED_DAYS);
   const agedCutoffISO = agedCutoff.toISOString().slice(0, 10);
 
+  const todayISO = now.toISOString().slice(0, 10);
+  const defaultDate =
+    todayISO >= monthStart && todayISO < monthEnd ? todayISO : monthStart;
+
   const supabase = createClient();
 
-  const [{ data: deals }, { data: appts }] = await Promise.all([
+  const [
+    { data: deals },
+    { data: appts },
+    { data: traffic },
+    { data: leadSources },
+    { data: salespeople },
+  ] = await Promise.all([
     supabase
       .from('deals')
       .select('id, deal_date, deal_number, customer_name, status, salesperson_user_id, pga_total')
@@ -96,6 +111,25 @@ export default async function SalesManagerPage({ params, searchParams }: PagePro
       .eq('store_id', store.id)
       .gte('appt_date', monthStart)
       .lt('appt_date', monthEnd),
+    supabase
+      .from('traffic_log')
+      .select('id, traffic_date, customer_name, lead_source_id, salesperson_user_id, notes')
+      .eq('store_id', store.id)
+      .gte('traffic_date', monthStart)
+      .lt('traffic_date', monthEnd)
+      .order('traffic_date', { ascending: false }),
+    supabase
+      .from('lead_sources')
+      .select('id, label, sort_order')
+      .eq('store_id', store.id)
+      .eq('active', true)
+      .order('sort_order'),
+    supabase
+      .from('user_profiles')
+      .select('id, full_name, email, role:roles!inner(department)')
+      .eq('active', true)
+      .eq('role.department', 'sales')
+      .order('full_name'),
   ]);
 
   // Pipeline counts by status.
@@ -129,6 +163,8 @@ export default async function SalesManagerPage({ params, searchParams }: PagePro
   const userIds = new Set<string>();
   for (const d of agedDeals) if (d.salesperson_user_id) userIds.add(d.salesperson_user_id);
   for (const id of apptByUser.keys()) userIds.add(id);
+  for (const t of traffic ?? []) if (t.salesperson_user_id) userIds.add(t.salesperson_user_id);
+  for (const sp of salespeople ?? []) userIds.add(sp.id);
 
   const nameById = new Map<string, string>();
   if (userIds.size > 0) {
@@ -140,6 +176,40 @@ export default async function SalesManagerPage({ params, searchParams }: PagePro
       nameById.set(u.id, u.full_name ?? u.email ?? 'Unknown');
     }
   }
+
+  const sourceLabel = new Map<string, string>();
+  for (const ls of leadSources ?? []) sourceLabel.set(ls.id, ls.label);
+
+  // Source breakdown for traffic_log only — internet leads (appointments)
+  // belong on the ISM dashboard.
+  const sourceCount = new Map<string, number>();
+  for (const t of traffic ?? []) {
+    if (!t.lead_source_id) continue;
+    sourceCount.set(t.lead_source_id, (sourceCount.get(t.lead_source_id) ?? 0) + 1);
+  }
+  const summaryRows: SourceSummaryRow[] = (leadSources ?? [])
+    .map((ls) => ({ id: ls.id, label: ls.label, count: sourceCount.get(ls.id) ?? 0 }))
+    .filter((r) => r.count > 0);
+
+  const recentTraffic: TrafficRow[] = (traffic ?? []).slice(0, 10).map((t) => ({
+    id: t.id,
+    trafficDate: t.traffic_date,
+    customerName: t.customer_name,
+    salespersonName: t.salesperson_user_id
+      ? nameById.get(t.salesperson_user_id) ?? null
+      : null,
+    sourceLabel: t.lead_source_id ? sourceLabel.get(t.lead_source_id) ?? null : null,
+    notes: t.notes,
+  }));
+
+  const salespersonOptions = (salespeople ?? []).map((sp) => ({
+    id: sp.id,
+    label: nameById.get(sp.id) ?? sp.full_name ?? sp.email ?? 'Unknown',
+  }));
+  const leadSourceOptions = (leadSources ?? []).map((ls) => ({
+    id: ls.id,
+    label: ls.label,
+  }));
 
   const closingRows = Array.from(apptByUser.entries())
     .map(([userId, v]) => ({
@@ -179,6 +249,15 @@ export default async function SalesManagerPage({ params, searchParams }: PagePro
       <div className="grid gap-4 px-4 md:px-6 lg:grid-cols-2">
         <PipelineCard pipeline={pipeline} total={totalDeals} />
         <ClosingCard rows={closingRows} overall={overallClose} />
+        <TrafficCard
+          storeId={store.id}
+          defaultDate={defaultDate}
+          summary={summaryRows}
+          totalTraffic={(traffic ?? []).length}
+          recent={recentTraffic}
+          salespeople={salespersonOptions}
+          leadSources={leadSourceOptions}
+        />
         <AgedDealsCard
           rows={agedDeals.map((d) => ({
             id: d.id,

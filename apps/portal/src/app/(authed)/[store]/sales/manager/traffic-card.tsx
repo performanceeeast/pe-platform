@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Radio, Trash2 } from 'lucide-react';
 import {
   Button,
   Card,
@@ -42,8 +42,7 @@ export interface TrafficRow {
 export interface SourceSummaryRow {
   id: string;
   label: string;
-  traffic: number;
-  appts: number;
+  count: number;
 }
 
 interface Props {
@@ -51,7 +50,6 @@ interface Props {
   defaultDate: string;
   summary: SourceSummaryRow[];
   totalTraffic: number;
-  totalAppts: number;
   recent: TrafficRow[];
   salespeople: SalespersonOption[];
   leadSources: LeadSourceOption[];
@@ -62,7 +60,6 @@ export function TrafficCard({
   defaultDate,
   summary,
   totalTraffic,
-  totalAppts,
   recent,
   salespeople,
   leadSources,
@@ -80,9 +77,7 @@ export function TrafficCard({
     startTransition(async () => {
       const res = await saveTraffic(fd);
       setFeedback(res);
-      if (res.ok) {
-        setCustomer('');
-      }
+      if (res.ok) setCustomer('');
     });
   }
 
@@ -98,12 +93,15 @@ export function TrafficCard({
   }
 
   return (
-    <Card>
+    <Card className="lg:col-span-2">
       <CardHeader>
-        <CardTitle className="text-base">Traffic by source</CardTitle>
+        <div className="flex items-center gap-2">
+          <Radio className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-base">Traffic by source</CardTitle>
+        </div>
         <CardDescription>
-          Walk-in / phone log + appointments grouped by source. Log walk-ins
-          and phone leads inline below.
+          Walk-ins and phone calls. Log inline below — internet leads stay on
+          the ISM dashboard.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -196,84 +194,89 @@ export function TrafficCard({
           ) : null}
         </form>
 
-        {summary.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No tagged traffic or appointments this month.
-          </p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-xs uppercase tracking-wider text-muted-foreground">
-                <tr className="border-b">
-                  <th className="py-2 text-left font-semibold">Source</th>
-                  <th className="py-2 text-right font-semibold">Traffic</th>
-                  <th className="py-2 text-right font-semibold">Appts</th>
-                  <th className="py-2 text-right font-semibold">Total</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {summary.map((r) => (
-                  <tr key={r.id}>
-                    <td className="py-2 font-medium">{r.label}</td>
-                    <td className="py-2 text-right tabular-nums">{r.traffic}</td>
-                    <td className="py-2 text-right tabular-nums">{r.appts}</td>
-                    <td className="py-2 text-right font-semibold tabular-nums">
-                      {r.traffic + r.appts}
-                    </td>
-                  </tr>
-                ))}
-                <tr className="border-t bg-muted/30 text-xs uppercase tracking-wider text-muted-foreground">
-                  <td className="py-2 font-semibold">Total</td>
-                  <td className="py-2 text-right tabular-nums">{totalTraffic}</td>
-                  <td className="py-2 text-right tabular-nums">{totalAppts}</td>
-                  <td className="py-2 text-right font-semibold tabular-nums">
-                    {totalTraffic + totalAppts}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {recent.length > 0 ? (
+        <div className="grid gap-4 lg:grid-cols-2">
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Recent traffic entries
+              Source breakdown
             </p>
-            <ul className="divide-y rounded-md border">
-              {recent.map((r) => (
-                <li key={r.id} className="flex items-center gap-3 px-3 py-2 text-sm">
-                  <span className="w-24 shrink-0 tabular-nums text-muted-foreground">
-                    {r.trafficDate}
-                  </span>
-                  <span className="min-w-0 flex-1 truncate">
-                    <span className="font-medium">{r.customerName ?? '—'}</span>
-                    {r.sourceLabel ? (
-                      <span className="ml-2 text-xs text-muted-foreground">
-                        {r.sourceLabel}
-                      </span>
-                    ) : null}
-                    {r.salespersonName ? (
-                      <span className="ml-2 text-xs text-muted-foreground">
-                        · {r.salespersonName}
-                      </span>
-                    ) : null}
-                  </span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    disabled={pending}
-                    onClick={() => onDelete(r)}
-                    aria-label="Delete traffic entry"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </li>
-              ))}
-            </ul>
+            {summary.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No traffic logged this month.
+              </p>
+            ) : (
+              <table className="w-full text-sm">
+                <thead className="text-xs uppercase tracking-wider text-muted-foreground">
+                  <tr className="border-b">
+                    <th className="py-2 text-left font-semibold">Source</th>
+                    <th className="py-2 text-right font-semibold">Count</th>
+                    <th className="py-2 text-right font-semibold">Share</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {summary.map((r) => {
+                    const pct = totalTraffic > 0 ? Math.round((r.count / totalTraffic) * 100) : 0;
+                    return (
+                      <tr key={r.id}>
+                        <td className="py-2 font-medium">{r.label}</td>
+                        <td className="py-2 text-right tabular-nums">{r.count}</td>
+                        <td className="py-2 text-right tabular-nums text-muted-foreground">
+                          {pct}%
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  <tr className="border-t bg-muted/30 text-xs uppercase tracking-wider text-muted-foreground">
+                    <td className="py-2 font-semibold">Total</td>
+                    <td className="py-2 text-right tabular-nums">{totalTraffic}</td>
+                    <td className="py-2 text-right tabular-nums">{''}</td>
+                  </tr>
+                </tbody>
+              </table>
+            )}
           </div>
-        ) : null}
+
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Recent entries
+            </p>
+            {recent.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No recent entries.</p>
+            ) : (
+              <ul className="divide-y rounded-md border">
+                {recent.map((r) => (
+                  <li key={r.id} className="flex items-center gap-3 px-3 py-2 text-sm">
+                    <span className="w-24 shrink-0 tabular-nums text-muted-foreground">
+                      {r.trafficDate}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate">
+                      <span className="font-medium">{r.customerName ?? '—'}</span>
+                      {r.sourceLabel ? (
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          {r.sourceLabel}
+                        </span>
+                      ) : null}
+                      {r.salespersonName ? (
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          · {r.salespersonName}
+                        </span>
+                      ) : null}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      disabled={pending}
+                      onClick={() => onDelete(r)}
+                      aria-label="Delete traffic entry"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

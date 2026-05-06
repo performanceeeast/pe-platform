@@ -2,18 +2,22 @@ import { unstable_noStore as noStore } from 'next/cache';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
-import { Button, PageHeader } from '@pe/ui';
+import { Users } from 'lucide-react';
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  PageHeader,
+} from '@pe/ui';
 import { requireUserContext, getLandingPath } from '@pe/auth';
 import { createClient } from '@pe/database/server';
 import { hasAnyRole } from '@/lib/sales-access';
 import { MonthYearPicker } from '@/components/month-year-picker';
 import { AppointmentsTable, type AppointmentRow } from './appointments-table';
 import { DailyCountsCard, type DailyCountRow } from './daily-counts-card';
-import {
-  TrafficCard,
-  type SourceSummaryRow,
-  type TrafficRow,
-} from './traffic-card';
 
 export const metadata: Metadata = { title: 'Internet sales' };
 
@@ -21,8 +25,6 @@ const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
-
-const RECENT_TRAFFIC_LIMIT = 10;
 
 function clampMonth(n: number): number {
   if (!Number.isFinite(n)) return new Date().getMonth() + 1;
@@ -54,8 +56,6 @@ export default async function InternetSalesPage({ params, searchParams }: PagePr
   const nextMonth = month === 12 ? { y: year + 1, m: 1 } : { y: year, m: month + 1 };
   const monthEnd = `${nextMonth.y}-${String(nextMonth.m).padStart(2, '0')}-01`;
   const todayISO = now.toISOString().slice(0, 10);
-  // Default new entries to today if today falls inside the chosen month, else
-  // the first of the chosen month so the date is always within the visible window.
   const defaultDate =
     todayISO >= monthStart && todayISO < monthEnd ? todayISO : monthStart;
 
@@ -64,7 +64,6 @@ export default async function InternetSalesPage({ params, searchParams }: PagePr
   const [
     { data: appts },
     { data: counts },
-    { data: traffic },
     { data: leadSources },
     { data: salespeople },
   ] = await Promise.all([
@@ -85,24 +84,11 @@ export default async function InternetSalesPage({ params, searchParams }: PagePr
       .lt('count_date', monthEnd)
       .order('count_date', { ascending: false }),
     supabase
-      .from('traffic_log')
-      .select(
-        'id, traffic_date, customer_name, lead_source_id, salesperson_user_id, notes',
-      )
-      .eq('store_id', store.id)
-      .gte('traffic_date', monthStart)
-      .lt('traffic_date', monthEnd)
-      .order('traffic_date', { ascending: false }),
-    supabase
       .from('lead_sources')
       .select('id, label, sort_order')
       .eq('store_id', store.id)
       .eq('active', true)
       .order('sort_order'),
-    // Pull anyone with sales-department role assignment for the dropdowns.
-    // Fallback: also include user_role_grants for sales roles (Cedar Point's
-    // dual-hatted manager). Keep simple: filter to active profiles with a
-    // sales-department primary role; admins can still set it manually later.
     supabase
       .from('user_profiles')
       .select('id, full_name, email, role:roles!inner(department)')
@@ -111,11 +97,9 @@ export default async function InternetSalesPage({ params, searchParams }: PagePr
       .order('full_name'),
   ]);
 
-  // Resolve salesperson names that appear in rows but might not be in the
-  // active "sales department" list above (e.g. sales reps that moved roles).
+  // Resolve names for any salesperson seen on appointments.
   const userIds = new Set<string>();
   for (const a of appts ?? []) if (a.salesperson_user_id) userIds.add(a.salesperson_user_id);
-  for (const t of traffic ?? []) if (t.salesperson_user_id) userIds.add(t.salesperson_user_id);
   for (const sp of salespeople ?? []) userIds.add(sp.id);
 
   const nameById = new Map<string, string>();
@@ -132,33 +116,38 @@ export default async function InternetSalesPage({ params, searchParams }: PagePr
   const sourceLabel = new Map<string, string>();
   for (const ls of leadSources ?? []) sourceLabel.set(ls.id, ls.label);
 
-  // Traffic source breakdown: count from traffic_log + appointments combined.
-  const sourceCounts = new Map<string, { traffic: number; appts: number }>();
-  for (const t of traffic ?? []) {
-    if (!t.lead_source_id) continue;
-    const cur = sourceCounts.get(t.lead_source_id) ?? { traffic: 0, appts: 0 };
-    cur.traffic += 1;
-    sourceCounts.set(t.lead_source_id, cur);
-  }
+  // Salesperson handoff performance: every appt the ISM books that gets
+  // assigned to a salesperson is a handoff. Track kept / sold against assigned.
+  const handoffByUser = new Map<string, { assigned: number; kept: number; sold: number }>();
+  let unassigned = 0;
   for (const a of appts ?? []) {
-    if (!a.lead_source_id) continue;
-    const cur = sourceCounts.get(a.lead_source_id) ?? { traffic: 0, appts: 0 };
-    cur.appts += 1;
-    sourceCounts.set(a.lead_source_id, cur);
+    if (!a.salesperson_user_id) {
+      unassigned += 1;
+      continue;
+    }
+    const cur =
+      handoffByUser.get(a.salesperson_user_id) ?? { assigned: 0, kept: 0, sold: 0 };
+    cur.assigned += 1;
+    if (a.kept) cur.kept += 1;
+    if (a.sold) cur.sold += 1;
+    handoffByUser.set(a.salesperson_user_id, cur);
   }
-
-  const summaryRows: SourceSummaryRow[] = (leadSources ?? [])
-    .map((ls) => {
-      const v = sourceCounts.get(ls.id) ?? { traffic: 0, appts: 0 };
-      return { id: ls.id, label: ls.label, traffic: v.traffic, appts: v.appts };
-    })
-    .filter((r) => r.traffic > 0 || r.appts > 0);
+  const handoffRows = Array.from(handoffByUser.entries())
+    .map(([userId, v]) => ({
+      userId,
+      name: nameById.get(userId) ?? 'Unknown',
+      assigned: v.assigned,
+      kept: v.kept,
+      sold: v.sold,
+      keepPct: v.assigned > 0 ? Math.round((v.kept / v.assigned) * 100) : 0,
+      closePct: v.kept > 0 ? Math.round((v.sold / v.kept) * 100) : 0,
+    }))
+    .sort((a, b) => b.sold - a.sold || b.closePct - a.closePct);
 
   const totalAppts = (appts ?? []).length;
   const keptAppts = (appts ?? []).filter((a) => a.kept).length;
   const soldAppts = (appts ?? []).filter((a) => a.sold).length;
   const totalLeads = (counts ?? []).reduce((s, c) => s + (c.total_leads ?? 0), 0);
-  const totalTraffic = (traffic ?? []).length;
 
   const apptRows: AppointmentRow[] = (appts ?? []).map((a) => ({
     id: a.id,
@@ -183,24 +172,10 @@ export default async function InternetSalesPage({ params, searchParams }: PagePr
     notes: c.notes,
   }));
 
-  const trafficRows: TrafficRow[] = (traffic ?? [])
-    .slice(0, RECENT_TRAFFIC_LIMIT)
-    .map((t) => ({
-      id: t.id,
-      trafficDate: t.traffic_date,
-      customerName: t.customer_name,
-      salespersonName: t.salesperson_user_id
-        ? nameById.get(t.salesperson_user_id) ?? null
-        : null,
-      sourceLabel: t.lead_source_id ? sourceLabel.get(t.lead_source_id) ?? null : null,
-      notes: t.notes,
-    }));
-
   const salespersonOptions = (salespeople ?? []).map((sp) => ({
     id: sp.id,
     label: nameById.get(sp.id) ?? sp.full_name ?? sp.email ?? 'Unknown',
   }));
-
   const leadSourceOptions = (leadSources ?? []).map((ls) => ({
     id: ls.id,
     label: ls.label,
@@ -212,7 +187,7 @@ export default async function InternetSalesPage({ params, searchParams }: PagePr
     <div className="space-y-6">
       <PageHeader
         title={`Internet sales · ${store.name}`}
-        description={`${monthLabel} · ${totalAppts} appt${totalAppts === 1 ? '' : 's'} · ${keptAppts} kept · ${soldAppts} sold · ${totalLeads} logged leads`}
+        description={`${monthLabel} · ${totalLeads} leads · ${totalAppts} appt${totalAppts === 1 ? '' : 's'} · ${keptAppts} kept · ${soldAppts} sold`}
         actions={
           <div className="flex items-center gap-2">
             <MonthYearPicker
@@ -228,21 +203,12 @@ export default async function InternetSalesPage({ params, searchParams }: PagePr
       />
 
       <div className="grid gap-4 px-4 md:px-6 lg:grid-cols-2">
-        <TrafficCard
-          storeId={store.id}
-          defaultDate={defaultDate}
-          summary={summaryRows}
-          totalTraffic={totalTraffic}
-          totalAppts={totalAppts}
-          recent={trafficRows}
-          salespeople={salespersonOptions}
-          leadSources={leadSourceOptions}
-        />
         <DailyCountsCard
           storeId={store.id}
           defaultDate={defaultDate}
           rows={countRows}
         />
+        <HandoffPerformanceCard rows={handoffRows} unassigned={unassigned} />
         <AppointmentsTable
           storeId={store.id}
           defaultDate={defaultDate}
@@ -252,5 +218,79 @@ export default async function InternetSalesPage({ params, searchParams }: PagePr
         />
       </div>
     </div>
+  );
+}
+
+interface HandoffRow {
+  userId: string;
+  name: string;
+  assigned: number;
+  kept: number;
+  sold: number;
+  keepPct: number;
+  closePct: number;
+}
+
+function HandoffPerformanceCard({
+  rows,
+  unassigned,
+}: {
+  rows: HandoffRow[];
+  unassigned: number;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Users className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-base">Salesperson handoff performance</CardTitle>
+        </div>
+        <CardDescription>
+          How each rep performs on the appointments you hand off to them this
+          month. Keep % = kept / assigned. Close % = sold / kept.
+          {unassigned > 0
+            ? ` ${unassigned} unassigned appt${unassigned === 1 ? '' : 's'}.`
+            : ''}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {rows.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No appointments have been handed off to a salesperson yet.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="text-xs uppercase tracking-wider text-muted-foreground">
+                <tr className="border-b">
+                  <th className="py-2 text-left font-semibold">Salesperson</th>
+                  <th className="py-2 text-right font-semibold">Assigned</th>
+                  <th className="py-2 text-right font-semibold">Kept</th>
+                  <th className="py-2 text-right font-semibold">Sold</th>
+                  <th className="py-2 text-right font-semibold">Keep %</th>
+                  <th className="py-2 text-right font-semibold">Close %</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {rows.map((r) => (
+                  <tr key={r.userId}>
+                    <td className="py-2 font-medium">{r.name}</td>
+                    <td className="py-2 text-right tabular-nums">{r.assigned}</td>
+                    <td className="py-2 text-right tabular-nums">{r.kept}</td>
+                    <td className="py-2 text-right tabular-nums">{r.sold}</td>
+                    <td className="py-2 text-right tabular-nums text-muted-foreground">
+                      {r.keepPct}%
+                    </td>
+                    <td className="py-2 text-right font-semibold tabular-nums">
+                      {r.closePct}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
