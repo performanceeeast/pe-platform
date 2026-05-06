@@ -42,7 +42,6 @@ export default async function DepartmentPage({ params }: DepartmentPageProps) {
 
   const label = DEPARTMENT_LABELS[dept];
   const roleName = ctx.role?.name ?? 'Employee';
-  const isManager = ctx.role?.rank === 'manager' || ctx.isAdmin;
 
   return (
     <div className="space-y-6">
@@ -51,39 +50,22 @@ export default async function DepartmentPage({ params }: DepartmentPageProps) {
         description={`Signed in as ${roleName}.`}
       />
 
-      <div className="grid gap-4 px-4 md:px-6 lg:grid-cols-2">
+      <div className="px-4 md:px-6">
         <Card>
           <CardHeader>
-            <CardTitle>Your dashboard is coming</CardTitle>
+            <CardTitle>{label} dashboard — coming soon</CardTitle>
             <CardDescription>
-              Real {label.toLowerCase()} content (pipeline, board, KPIs) lands here as
-              we migrate features in. For now this is a placeholder so routing and
-              access control can be verified end-to-end.
+              Real {label.toLowerCase()} tools (pipeline, board, KPIs) land here as
+              the next departments come online. Sales is live now; F&I has its own
+              dashboard at <code>/{store.slug}/fni</code>.
             </CardDescription>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
-            Store: <span className="font-medium text-foreground">{store.name}</span>
-            <br />
-            Department: <span className="font-medium text-foreground">{label}</span>
-            <br />
-            Role: <span className="font-medium text-foreground">{roleName}</span>
+            For now this page just confirms routing and access control are working
+            for the {label.toLowerCase()} team. Reach out to Matthew if you need a
+            specific report or workflow prioritized.
           </CardContent>
         </Card>
-
-        {isManager ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Targets &amp; goals</CardTitle>
-              <CardDescription>
-                Pay-plan-driven targets for you and your team appear here. Set up
-                begins once pay plans are wired in.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              Nothing to show yet.
-            </CardContent>
-          </Card>
-        ) : null}
       </div>
     </div>
   );

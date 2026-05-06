@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { LogOut, User as UserIcon } from 'lucide-react';
 import {
   Button,
@@ -47,9 +48,11 @@ export function UserMenu({ email, fullName, roleLabel }: UserMenuProps) {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem disabled>
-          <UserIcon className="mr-2 h-4 w-4" />
-          Profile (coming soon)
+        <DropdownMenuItem asChild>
+          <Link href="/profile" className="cursor-pointer">
+            <UserIcon className="mr-2 h-4 w-4" />
+            Profile
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <form action={signOut}>
