@@ -19,3 +19,21 @@ export async function canManageSalesConfig(): Promise<boolean> {
   });
   return data === true;
 }
+
+/**
+ * True when any of the supplied role slugs match the current user (primary
+ * role or user_role_grants). Admins always pass. One round-trip per slug —
+ * fine for a 1-3 slug check, swap to a single SQL view if it grows.
+ */
+export async function hasAnyRole(slugs: string[]): Promise<boolean> {
+  const ctx = await requireUserContext();
+  if (ctx.isAdmin) return true;
+  if (ctx.role && slugs.includes(ctx.role.slug)) return true;
+
+  const supabase = createClient();
+  for (const slug of slugs) {
+    const { data } = await supabase.rpc('current_user_has_role_slug', { p_slug: slug });
+    if (data === true) return true;
+  }
+  return false;
+}
