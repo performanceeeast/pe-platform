@@ -15,7 +15,7 @@ import {
 } from '@pe/ui';
 import { requireUserContext, getLandingPath } from '@pe/auth';
 import { createClient } from '@pe/database/server';
-import { canManageSalesConfig } from '@/lib/sales-access';
+import { canManageSalesConfig, hasAnyRole } from '@/lib/sales-access';
 import { promoPublicUrl } from '@/lib/promo-url';
 
 export const metadata: Metadata = { title: 'Sales' };
@@ -40,7 +40,11 @@ export default async function SalesDeptPage({ params }: SalesPageProps) {
     redirect(getLandingPath(ctx));
   }
 
-  const canSetup = await canManageSalesConfig();
+  const [canSetup, canSeePipeline, canSeeIsm] = await Promise.all([
+    canManageSalesConfig(),
+    hasAnyRole(['sales_manager']),
+    hasAnyRole(['internet_sales_manager', 'sales_manager']),
+  ]);
 
   const now = new Date();
   const year = now.getFullYear();
@@ -184,6 +188,16 @@ export default async function SalesDeptPage({ params }: SalesPageProps) {
             <Button asChild variant="outline">
               <Link href={`/${store.slug}/sales/leaderboard`}>Leaderboard</Link>
             </Button>
+            {canSeePipeline ? (
+              <Button asChild variant="outline">
+                <Link href={`/${store.slug}/sales/manager`}>Pipeline</Link>
+              </Button>
+            ) : null}
+            {canSeeIsm ? (
+              <Button asChild variant="outline">
+                <Link href={`/${store.slug}/sales/internet`}>Internet</Link>
+              </Button>
+            ) : null}
             {canSetup ? (
               <Button asChild variant="outline">
                 <Link href={`/${store.slug}/sales/setup`}>Setup</Link>
