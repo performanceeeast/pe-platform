@@ -32,32 +32,37 @@ packages/
   branding/   color scale + typography tokens
   config/     tsconfig, eslint, tailwind preset
 supabase/
-  migrations/ Versioned SQL — 0001 initial, …, 0010 most recent at time of writing.
+  migrations/ Versioned SQL — 0001 initial, …, 0011 most recent at time of writing.
 ```
 
 ---
 
-## Current state (as of 2026-04-22)
+## Current state (as of 2026-07-30)
 
-✅ **Ops dashboard** — ported into portal at `/[store]/admin/*` (today,
-kanban, projects, notes, settings).
+✅ **Ops dashboard** — operational inside the portal at `/[store]/admin/*`:
+- Today dashboard + quick task entry.
+- Five-column Kanban with department filter and task movement.
+- Projects with create flow and linked task entry.
+- Notes with manual capture and create-task-from-note workflow. iPad sync is
+  not connected yet.
+- Settings page still lists future integrations (Google Calendar, iPad sync,
+  Claude extraction).
 
 ✅ **Sales module** — fully usable end-to-end:
-- Setup surfaces for Ops Manager / Sales Manager: monthly goals, PG&A
-  tiers, back-end spiffs, contests, hit list (CSV/XLSX import), promo hub
-  (PDF upload).
+- Setup surfaces for Ops Manager / Sales Manager: monthly goals, PG&A tiers,
+  back-end spiffs, contests, hit list (CSV/XLSX import), promo hub (PDF upload).
 - Salesperson workflow: deal entry with hit-list auto-match, deal list
   (role-scoped), deal detail with finance back-end + F&I checkboxes.
-- Dashboards: sales landing with goal progress / leaderboard / contests /
-  promos; dedicated PG&A leaderboard at `/[store]/sales/leaderboard`
-  (monthly + YTD).
+- Dashboards: sales landing, PG&A leaderboard, Sales Manager pipeline +
+  walk-in/phone traffic, F&I KPIs, and functional ISM daily lead counts,
+  appointments, kept/sold outcomes, and salesperson handoff performance.
 
-🚧 **Manager dashboards** — not built yet. Sales Manager pipeline health,
-F&I KPIs, Internet Sales Manager appt log + daily lead counts. Schema is
-live (`appointments`, `daily_lead_counts`, `traffic_log`); UI pending.
+✅ **Portal support surfaces** — user invites/roles/store access, additive
+salesperson toggle, editable profile, targets, Employee Handbook, Paychex Flex,
+and a Links placeholder ready for OEM/vendor URLs.
 
-📋 **Other departments (service, parts, F&I)** — placeholder pages only.
-Build out one at a time after sales.
+📋 **Other departments** — Service and Parts have honest placeholder pages only;
+their operational schemas and workflows have not been designed yet.
 
 ---
 
@@ -179,6 +184,9 @@ and doesn't need a server.
 /[store]/sales/deals/new           → front-end entry form
 /[store]/sales/deals/[id]          → detail w/ finance back-end + F&I checkboxes
 /[store]/sales/leaderboard         → PG&A $ board, month + YTD
+/[store]/sales/manager             → pipeline, aged deals, closing %, traffic log
+/[store]/sales/internet            → ISM lead counts, appointments, handoff performance
+/[store]/fni                       → F&I KPI dashboard
 /[store]/sales/setup               → Ops Manager / Sales Manager hub
   /setup/goals                     → unit-type targets, stretch, payouts
   /setup/pga                       → PG&A spiff tiers (variable rows)
@@ -196,7 +204,8 @@ and doesn't need a server.
 2. `supabase/migrations/0003_portal_foundation.sql` — stores, roles,
    user_store_access, helper functions, RLS baseline.
 3. `supabase/migrations/0004_sales_role_grants_and_lookups.sql` →
-   `0010_aged_inventory_year_make_model.sql` — sales schema.
+    011_user_profiles_visibility.sql — sales schema plus authenticated
+   employee-directory visibility.
 4. `packages/auth/src/context.ts` — how UserContext is assembled.
 5. `apps/portal/src/lib/sales-access.ts` — the `canManageSalesConfig` gate.
 6. `apps/portal/src/app/(authed)/[store]/sales/deals/new/actions.ts` —
@@ -206,21 +215,22 @@ and doesn't need a server.
 
 ## What's next
 
-Step 4 of the build plan: **manager-specific dashboards**.
-- **Sales Manager pipeline health** — read `appointments` + `traffic_log`
-  + `deals` to show conversion funnels per rep, stale leads, single-
-  threaded deals, etc.
-- **F&I KPI panel** — penetration % per product, average back-end per
-  deal, commission tier (mirroring the legacy peg-sales-tracker logic
-  at a high level).
-- **Internet Sales Manager** surfaces — appt log entry/edit, daily lead
-  counts (schema lives, UI doesn't).
+The original Step 4 manager dashboards and the Ops Projects / Notes / Kanban
+surfaces are complete. The remaining work now requires either business-process
+design or an external integration:
 
-Step 5: accountability tasks + delivery checklist (placeholders OK
-per the original reference doc).
+1. **Service department design** — define the first workflow and schema
+   (repair orders, technician board, writer follow-up, or another priority).
+2. **Parts department design** — define the first workflow and schema
+   (special orders, receiving, backorders, or another priority).
+3. **Resources Links** — add OEM and vendor URLs when Matthew provides them.
+4. **Google Calendar sync** — OAuth + event synchronization.
+5. **iPad notes pipeline** — PDF upload → transcription → task extraction.
+6. **Future F&I menu builder** — port the warranty-rate logic from
+   `peg-sales-tracker` when it becomes a priority.
 
-Future: real F&I menu builder (port from `peg-sales-tracker`'s
-warranty-rate engine).
+Do not present Service, Parts, Calendar, or iPad sync as live until their
+schema/integration has been implemented and verified.
 
 ---
 
